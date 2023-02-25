@@ -1,5 +1,4 @@
 const std = @import("std");
-const version = "3.100";
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -88,9 +87,12 @@ const generic_src_files = [_][]const u8{
     "src/file/SDL_rwops.c",
     "src/haptic/SDL_haptic.c",
     "src/hidapi/SDL_hidapi.c",
+
     "src/joystick/SDL_gamecontroller.c",
     "src/joystick/SDL_joystick.c",
     "src/joystick/controller_type.c",
+    "src/joystick/virtual/SDL_virtualjoystick.c",
+
     "src/libm/e_atan2.c",
     "src/libm/e_exp.c",
     "src/libm/e_fmod.c",
@@ -152,6 +154,19 @@ const generic_src_files = [_][]const u8{
     "src/video/SDL_vulkan_utils.c",
     "src/video/SDL_yuv.c",
     "src/video/yuv2rgb/yuv_rgb.c",
+
+    "src/video/dummy/SDL_nullevents.c",
+    "src/video/dummy/SDL_nullframebuffer.c",
+    "src/video/dummy/SDL_nullvideo.c",
+
+    "src/render/software/SDL_blendfillrect.c",
+    "src/render/software/SDL_blendline.c",
+    "src/render/software/SDL_blendpoint.c",
+    "src/render/software/SDL_drawline.c",
+    "src/render/software/SDL_drawpoint.c",
+    "src/render/software/SDL_render_sw.c",
+    "src/render/software/SDL_rotate.c",
+    "src/render/software/SDL_triangle.c",
 };
 
 const windows_src_files = [_][]const u8{
@@ -165,12 +180,31 @@ const windows_src_files = [_][]const u8{
     "src/haptic/windows/SDL_xinputhaptic.c",
     "src/hidapi/windows/hid.c",
     "src/joystick/windows/SDL_dinputjoystick.c",
-    // These can be enabled when Zig updates to the next mingw-w64 release,
+    "src/joystick/windows/SDL_rawinputjoystick.c",
+    // This can be enabled when Zig updates to the next mingw-w64 release,
     // which will make the headers gain `windows.gaming.input.h`.
-    //"src/joystick/windows/SDL_rawinputjoystick.c",
+    // Also revert the patch 2c79fd8fd04f1e5045cbe5978943b0aea7593110.
     //"src/joystick/windows/SDL_windows_gaming_input.c",
     "src/joystick/windows/SDL_windowsjoystick.c",
     "src/joystick/windows/SDL_xinputjoystick.c",
+
+    "src/joystick/hidapi/SDL_hidapi_combined.c",
+    "src/joystick/hidapi/SDL_hidapi_gamecube.c",
+    "src/joystick/hidapi/SDL_hidapi_luna.c",
+    "src/joystick/hidapi/SDL_hidapi_ps3.c",
+    "src/joystick/hidapi/SDL_hidapi_ps4.c",
+    "src/joystick/hidapi/SDL_hidapi_ps5.c",
+    "src/joystick/hidapi/SDL_hidapi_rumble.c",
+    "src/joystick/hidapi/SDL_hidapi_shield.c",
+    "src/joystick/hidapi/SDL_hidapi_stadia.c",
+    "src/joystick/hidapi/SDL_hidapi_steam.c",
+    "src/joystick/hidapi/SDL_hidapi_switch.c",
+    "src/joystick/hidapi/SDL_hidapi_wii.c",
+    "src/joystick/hidapi/SDL_hidapi_xbox360.c",
+    "src/joystick/hidapi/SDL_hidapi_xbox360w.c",
+    "src/joystick/hidapi/SDL_hidapi_xboxone.c",
+    "src/joystick/hidapi/SDL_hidapijoystick.c",
+
     "src/loadso/windows/SDL_sysloadso.c",
     "src/locale/windows/SDL_syslocale.c",
     "src/main/windows/SDL_windows_main.c",
@@ -191,11 +225,18 @@ const windows_src_files = [_][]const u8{
     "src/video/windows/SDL_windowsvideo.c",
     "src/video/windows/SDL_windowsvulkan.c",
     "src/video/windows/SDL_windowswindow.c",
+
     "src/thread/windows/SDL_syscond_cv.c",
     "src/thread/windows/SDL_sysmutex.c",
     "src/thread/windows/SDL_syssem.c",
     "src/thread/windows/SDL_systhread.c",
     "src/thread/windows/SDL_systls.c",
+
+    "src/thread/generic/SDL_syscond.c",
+    "src/thread/generic/SDL_sysmutex.c",
+    "src/thread/generic/SDL_syssem.c",
+    "src/thread/generic/SDL_systhread.c",
+    "src/thread/generic/SDL_systls.c",
 
     "src/render/direct3d/SDL_render_d3d.c",
     "src/render/direct3d/SDL_shaders_d3d.c",
@@ -205,11 +246,17 @@ const windows_src_files = [_][]const u8{
     "src/render/direct3d12/SDL_shaders_d3d12.c",
 
     "src/audio/directsound/SDL_directsound.c",
-
     "src/audio/wasapi/SDL_wasapi.c",
     "src/audio/wasapi/SDL_wasapi_win32.c",
-
     "src/audio/winmm/SDL_winmm.c",
+    "src/audio/disk/SDL_diskaudio.c",
+    "src/audio/dummy/SDL_dummyaudio.c",
+
+    "src/render/opengl/SDL_render_gl.c",
+    "src/render/opengl/SDL_shaders_gl.c",
+    "src/render/opengles/SDL_render_gles.c",
+    "src/render/opengles2/SDL_render_gles2.c",
+    "src/render/opengles2/SDL_shaders_gles2.c",
 };
 
 const linux_src_files = [_][]const u8{
@@ -269,9 +316,7 @@ const unknown_src_files = [_][]const u8{
     "src/audio/aaudio/SDL_aaudio.c",
     "src/audio/android/SDL_androidaudio.c",
     "src/audio/arts/SDL_artsaudio.c",
-    "src/audio/disk/SDL_diskaudio.c",
     "src/audio/dsp/SDL_dspaudio.c",
-    "src/audio/dummy/SDL_dummyaudio.c",
     "src/audio/emscripten/SDL_emscriptenaudio.c",
     "src/audio/esd/SDL_esdaudio.c",
     "src/audio/fusionsound/SDL_fsaudio.c",
@@ -328,28 +373,11 @@ const unknown_src_files = [_][]const u8{
     "src/joystick/darwin/SDL_iokitjoystick.c",
     "src/joystick/dummy/SDL_sysjoystick.c",
     "src/joystick/emscripten/SDL_sysjoystick.c",
-    "src/joystick/hidapi/SDL_hidapi_combined.c",
-    "src/joystick/hidapi/SDL_hidapi_gamecube.c",
-    "src/joystick/hidapi/SDL_hidapi_luna.c",
-    "src/joystick/hidapi/SDL_hidapi_ps3.c",
-    "src/joystick/hidapi/SDL_hidapi_ps4.c",
-    "src/joystick/hidapi/SDL_hidapi_ps5.c",
-    "src/joystick/hidapi/SDL_hidapi_rumble.c",
-    "src/joystick/hidapi/SDL_hidapi_shield.c",
-    "src/joystick/hidapi/SDL_hidapi_stadia.c",
-    "src/joystick/hidapi/SDL_hidapi_steam.c",
-    "src/joystick/hidapi/SDL_hidapi_switch.c",
-    "src/joystick/hidapi/SDL_hidapi_wii.c",
-    "src/joystick/hidapi/SDL_hidapi_xbox360.c",
-    "src/joystick/hidapi/SDL_hidapi_xbox360w.c",
-    "src/joystick/hidapi/SDL_hidapi_xboxone.c",
-    "src/joystick/hidapi/SDL_hidapijoystick.c",
     "src/joystick/n3ds/SDL_sysjoystick.c",
     "src/joystick/os2/SDL_os2joystick.c",
     "src/joystick/ps2/SDL_sysjoystick.c",
     "src/joystick/psp/SDL_sysjoystick.c",
     "src/joystick/steam/SDL_steamcontroller.c",
-    "src/joystick/virtual/SDL_virtualjoystick.c",
     "src/joystick/vita/SDL_sysjoystick.c",
 
     "src/loadso/dlopen/SDL_sysloadso.c",
@@ -410,11 +438,6 @@ const unknown_src_files = [_][]const u8{
     "src/test/SDL_test_memory.c",
     "src/test/SDL_test_random.c",
 
-    "src/thread/generic/SDL_syscond.c",
-    "src/thread/generic/SDL_sysmutex.c",
-    "src/thread/generic/SDL_syssem.c",
-    "src/thread/generic/SDL_systhread.c",
-    "src/thread/generic/SDL_systls.c",
     "src/thread/n3ds/SDL_syscond.c",
     "src/thread/n3ds/SDL_sysmutex.c",
     "src/thread/n3ds/SDL_syssem.c",
@@ -469,9 +492,6 @@ const unknown_src_files = [_][]const u8{
     "src/video/directfb/SDL_DirectFB_video.c",
     "src/video/directfb/SDL_DirectFB_vulkan.c",
     "src/video/directfb/SDL_DirectFB_window.c",
-    "src/video/dummy/SDL_nullevents.c",
-    "src/video/dummy/SDL_nullframebuffer.c",
-    "src/video/dummy/SDL_nullvideo.c",
     "src/video/emscripten/SDL_emscriptenevents.c",
     "src/video/emscripten/SDL_emscriptenframebuffer.c",
     "src/video/emscripten/SDL_emscriptenmouse.c",
@@ -546,14 +566,6 @@ const unknown_src_files = [_][]const u8{
     "src/render/opengles2/SDL_shaders_gles2.c",
     "src/render/ps2/SDL_render_ps2.c",
     "src/render/psp/SDL_render_psp.c",
-    "src/render/software/SDL_blendfillrect.c",
-    "src/render/software/SDL_blendline.c",
-    "src/render/software/SDL_blendpoint.c",
-    "src/render/software/SDL_drawline.c",
-    "src/render/software/SDL_drawpoint.c",
-    "src/render/software/SDL_render_sw.c",
-    "src/render/software/SDL_rotate.c",
-    "src/render/software/SDL_triangle.c",
     "src/render/vitagxm/SDL_render_vita_gxm.c",
     "src/render/vitagxm/SDL_render_vita_gxm_memory.c",
     "src/render/vitagxm/SDL_render_vita_gxm_tools.c",
