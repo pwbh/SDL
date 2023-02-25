@@ -11,9 +11,9 @@
 */
 
 #include <stdlib.h>
+#include <stdio.h>
 
-#include <SDL3/SDL_test_common.h>
-#include <SDL3/SDL_main.h>
+#include "SDL_test_common.h"
 
 static SDLTest_CommonState *state;
 
@@ -25,7 +25,8 @@ quit(int rc)
     exit(rc);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     int i, done;
     SDL_Event event;
@@ -35,7 +36,7 @@ int main(int argc, char *argv[])
 
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
-    if (state == NULL) {
+    if (!state) {
         return 1;
     }
 
@@ -43,8 +44,8 @@ int main(int argc, char *argv[])
         int consumed;
 
         consumed = SDLTest_CommonArg(state, i);
-        /* needed voodoo to allow app to launch via macOS Finder */
-        if (SDL_strncmp(argv[i], "-psn", 4) == 0) {
+        /* needed voodoo to allow app to launch via OS X Finder */
+        if (SDL_strncmp(argv[i], "-psn", 4)==0) {
             consumed = 1;
         }
         if (consumed == 0) {
@@ -67,21 +68,21 @@ int main(int argc, char *argv[])
         SDL_RenderPresent(renderer);
     }
 
-    SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, SDL_TRUE);
+    SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
 
     /* Main render loop */
     done = 0;
     while (!done) {
         /* Check for events */
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_DROP_BEGIN) {
-                SDL_Log("Drop beginning on window %u", (unsigned int)event.drop.windowID);
-            } else if (event.type == SDL_EVENT_DROP_COMPLETE) {
-                SDL_Log("Drop complete on window %u", (unsigned int)event.drop.windowID);
-            } else if ((event.type == SDL_EVENT_DROP_FILE) || (event.type == SDL_EVENT_DROP_TEXT)) {
-                const char *typestr = (event.type == SDL_EVENT_DROP_FILE) ? "File" : "Text";
+            if (event.type == SDL_DROPBEGIN) {
+                SDL_Log("Drop beginning on window %u", (unsigned int) event.drop.windowID);
+            } else if (event.type == SDL_DROPCOMPLETE) {
+                SDL_Log("Drop complete on window %u", (unsigned int) event.drop.windowID);
+            } else if ((event.type == SDL_DROPFILE) || (event.type == SDL_DROPTEXT)) {
+                const char *typestr = (event.type == SDL_DROPFILE) ? "File" : "Text";
                 char *dropped_filedir = event.drop.file;
-                SDL_Log("%s dropped on window %u: %s", typestr, (unsigned int)event.drop.windowID, dropped_filedir);
+                SDL_Log("%s dropped on window %u: %s", typestr, (unsigned int) event.drop.windowID, dropped_filedir);
                 /* Normally you'd have to do this, but this is freed in SDLTest_CommonEvent() */
                 /*SDL_free(dropped_filedir);*/
             }
@@ -92,5 +93,7 @@ int main(int argc, char *argv[])
 
     quit(0);
     /* keep the compiler happy ... */
-    return 0;
+    return(0);
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

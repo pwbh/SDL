@@ -12,12 +12,15 @@
 
 /* Print out all the scancodes we have, just to verify them */
 
+#include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include "SDL.h"
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     SDL_Scancode scancode;
 
@@ -30,8 +33,8 @@ int main(int argc, char *argv[])
     }
     for (scancode = 0; scancode < SDL_NUM_SCANCODES; ++scancode) {
         SDL_Log("Scancode #%d, \"%s\"\n", scancode,
-                SDL_GetScancodeName(scancode));
+               SDL_GetScancodeName(scancode));
     }
     SDL_Quit();
-    return 0;
+    return (0);
 }

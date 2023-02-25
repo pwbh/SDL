@@ -18,11 +18,14 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 /* An implementation of semaphores using mutexes and condition variables */
 
+#include "SDL_timer.h"
+#include "SDL_thread.h"
 #include "SDL_systhread_c.h"
+
 
 #if SDL_THREADS_DISABLED
 
@@ -30,25 +33,40 @@ SDL_sem *
 SDL_CreateSemaphore(Uint32 initial_value)
 {
     SDL_SetError("SDL not built with thread support");
-    return (SDL_sem *)0;
+    return (SDL_sem *) 0;
 }
 
-void SDL_DestroySemaphore(SDL_sem *sem)
+void
+SDL_DestroySemaphore(SDL_sem * sem)
 {
 }
 
-int SDL_SemWaitTimeoutNS(SDL_sem *sem, Sint64 timeoutNS)
+int
+SDL_SemTryWait(SDL_sem * sem)
+{
+    return SDL_SetError("SDL not built with thread support");
+}
+
+int
+SDL_SemWaitTimeout(SDL_sem * sem, Uint32 timeout)
+{
+    return SDL_SetError("SDL not built with thread support");
+}
+
+int
+SDL_SemWait(SDL_sem * sem)
 {
     return SDL_SetError("SDL not built with thread support");
 }
 
 Uint32
-SDL_SemValue(SDL_sem *sem)
+SDL_SemValue(SDL_sem * sem)
 {
     return 0;
 }
 
-int SDL_SemPost(SDL_sem *sem)
+int
+SDL_SemPost(SDL_sem * sem)
 {
     return SDL_SetError("SDL not built with thread support");
 }
@@ -68,8 +86,8 @@ SDL_CreateSemaphore(Uint32 initial_value)
 {
     SDL_sem *sem;
 
-    sem = (SDL_sem *)SDL_malloc(sizeof(*sem));
-    if (sem == NULL) {
+    sem = (SDL_sem *) SDL_malloc(sizeof(*sem));
+    if (!sem) {
         SDL_OutOfMemory();
         return NULL;
     }
@@ -89,7 +107,8 @@ SDL_CreateSemaphore(Uint32 initial_value)
 /* WARNING:
    You cannot call this function when another thread is using the semaphore.
 */
-void SDL_DestroySemaphore(SDL_sem *sem)
+void
+SDL_DestroySemaphore(SDL_sem * sem)
 {
     if (sem) {
         sem->count = 0xFFFFFFFF;
@@ -107,33 +126,46 @@ void SDL_DestroySemaphore(SDL_sem *sem)
     }
 }
 
-int SDL_SemWaitTimeoutNS(SDL_sem *sem, Sint64 timeoutNS)
+int
+SDL_SemTryWait(SDL_sem * sem)
 {
     int retval;
 
-    if (sem == NULL) {
+    if (!sem) {
+        return SDL_InvalidParamError("sem");
+    }
+
+    retval = SDL_MUTEX_TIMEDOUT;
+    SDL_LockMutex(sem->count_lock);
+    if (sem->count > 0) {
+        --sem->count;
+        retval = 0;
+    }
+    SDL_UnlockMutex(sem->count_lock);
+
+    return retval;
+}
+
+int
+SDL_SemWaitTimeout(SDL_sem * sem, Uint32 timeout)
+{
+    int retval;
+
+    if (!sem) {
         return SDL_InvalidParamError("sem");
     }
 
     /* A timeout of 0 is an easy case */
-    if (timeoutNS == 0) {
-        retval = SDL_MUTEX_TIMEDOUT;
-        SDL_LockMutex(sem->count_lock);
-        if (sem->count > 0) {
-            --sem->count;
-            retval = 0;
-        }
-        SDL_UnlockMutex(sem->count_lock);
-
-        return retval;
+    if (timeout == 0) {
+        return SDL_SemTryWait(sem);
     }
 
     SDL_LockMutex(sem->count_lock);
     ++sem->waiters_count;
     retval = 0;
     while ((sem->count == 0) && (retval != SDL_MUTEX_TIMEDOUT)) {
-        retval = SDL_CondWaitTimeoutNS(sem->count_nonzero,
-                                     sem->count_lock, timeoutNS);
+        retval = SDL_CondWaitTimeout(sem->count_nonzero,
+                                     sem->count_lock, timeout);
     }
     --sem->waiters_count;
     if (retval == 0) {
@@ -144,8 +176,14 @@ int SDL_SemWaitTimeoutNS(SDL_sem *sem, Sint64 timeoutNS)
     return retval;
 }
 
+int
+SDL_SemWait(SDL_sem * sem)
+{
+    return SDL_SemWaitTimeout(sem, SDL_MUTEX_MAXWAIT);
+}
+
 Uint32
-SDL_SemValue(SDL_sem *sem)
+SDL_SemValue(SDL_sem * sem)
 {
     Uint32 value;
 
@@ -158,9 +196,10 @@ SDL_SemValue(SDL_sem *sem)
     return value;
 }
 
-int SDL_SemPost(SDL_sem *sem)
+int
+SDL_SemPost(SDL_sem * sem)
 {
-    if (sem == NULL) {
+    if (!sem) {
         return SDL_InvalidParamError("sem");
     }
 
@@ -175,3 +214,4 @@ int SDL_SemPost(SDL_sem *sem)
 }
 
 #endif /* SDL_THREADS_DISABLED */
+/* vi: set ts=4 sw=4 expandtab: */

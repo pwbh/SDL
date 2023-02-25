@@ -19,8 +19,9 @@
  code repository located at:
  https://github.com/libusb/hidapi .
  ********************************************************/
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
+#include "SDL_hints.h"
 
 /* See Apple Technical Note TN2187 for details on IOHidManager. */
 
@@ -818,12 +819,10 @@ hid_device * HID_API_EXPORT hid_open_path(const char *path, int bExclusive)
 	/* Set up the HID Manager if it hasn't been done */
 	if (hid_init() < 0)
 		return NULL;
-
-#if 0 /* We have a path because the IOHIDManager is already updated */
+	
 	/* give the IOHIDManager a chance to update itself */
 	process_pending_events();
-#endif
-
+	
 	device_set = IOHIDManagerCopyDevices(hid_mgr);
 	if (!device_set)
 		return NULL;

@@ -26,7 +26,6 @@ my $warn_about_missing = 0;
 my $copy_direction = 0;
 my $optionsfname = undef;
 my $wikipreamble = undef;
-my $changeformat = undef;
 
 foreach (@ARGV) {
     $warn_about_missing = 1, next if $_ eq '--warn-about-missing';
@@ -36,9 +35,6 @@ foreach (@ARGV) {
     $copy_direction = -2, next if $_ eq '--copy-to-manpages';
     if (/\A--options=(.*)\Z/) {
         $optionsfname = $1;
-        next;
-    } elsif (/\A--changeformat=(.*)\Z/) {
-        $changeformat = $1;
         next;
     }
     $srcpath = $_, next if not defined $srcpath;
@@ -135,7 +131,6 @@ sub wordwrap_with_bullet_indent {  # don't call this directly.
     my $usual_prefix = ' ' x $bulletlen;
 
     foreach (@wrappedlines) {
-        s/\s*\Z//;
         $retval .= "$prefix$_\n";
         $prefix = $usual_prefix;
     }
@@ -260,11 +255,9 @@ sub wikify_chunk {
             $str .= "<syntaxhighlight lang='$codelang'>$code<\/syntaxhighlight>";
         }
     } elsif ($wikitype eq 'md') {
-        # Convert obvious API things to wikilinks. You can't make links
-        # inside code blocks, but you _can_ make sure that single identifiers
-        # wrapped in backticks encode correctly.
+        # Convert obvious API things to wikilinks.
         if (defined $apiprefixregex) {
-            $str =~ s/(?<LEFT>\b|\`?)(?<SYM>$apiprefixregex[a-zA-Z0-9_]+)(?<RIGHT>\`?)/[$+{"LEFT"}$+{"SYM"}$+{"RIGHT"}]($+{"SYM"})/gms;
+            $str =~ s/\b($apiprefixregex[a-zA-Z0-9_]+)/[$1]($1)/gms;
         }
         if (defined $code) {
             $str .= "```$codelang$code```";
@@ -332,11 +325,6 @@ sub dewikify_chunk {
 
             # bullets
             $str =~ s/^\* /- /gm;
-        } elsif ($wikitype eq 'md') {
-            # Dump obvious wikilinks. The rest can just passthrough.
-            if (defined $apiprefixregex) {
-                $str =~ s/\[(?<LEFT>\`?)(?<SYM>$apiprefixregex[a-zA-Z0-9_]+)(?<RIGHT>\`?)\]\(($apiprefixregex[a-zA-Z0-9_]+)\)/$+{"LEFT"}$+{"SYM"}$+{"RIGHT"}/gms;
-            }
         }
 
         if (defined $code) {
@@ -367,30 +355,6 @@ sub dewikify_chunk {
 
             # bullets
             $str =~ s/^\* /\n\\\(bu /gm;
-        } elsif ($wikitype eq 'md') {
-            # Dump obvious wikilinks.
-            if (defined $apiprefixregex) {
-                $str =~ s/\[(?<LEFT>\`?)(?<SYM>$apiprefixregex[a-zA-Z0-9_]+)(?<RIGHT>\`?)\]\(($apiprefixregex[a-zA-Z0-9_]+)\)/\n.BR $+{"SYM"}\n/gms;
-            }
-
-            # links
-            $str =~ s/\[(.*?)]\((https?\:\/\/.*?)\)/\n.URL "$2" "$1"\n/g;
-
-            # <code></code> is also popular.  :/
-            $str =~ s/\s*\`(.*?)\`\s*/\n.BR $1\n/gms;
-
-            # bold+italic
-            $str =~ s/\s*\*\*\*(.*?)\*\*\*\s*/\n.BI $1\n/gms;
-
-            # bold
-            $str =~ s/\s*\*\*(.*?)\*\*\s*/\n.B $1\n/gms;
-
-            # italic
-            $str =~ s/\s*\*(.*?)\*\s*/\n.I $1\n/gms;
-
-            # bullets
-            $str =~ s/^\- /\n\\\(bu /gm;
-
         } else {
             die("Unexpected wikitype when converting to manpages\n");   # !!! FIXME: need to handle Markdown wiki pages.
         }
@@ -451,7 +415,6 @@ my @standard_wiki_sections = (
     'Function Parameters',
     'Return Value',
     'Remarks',
-    'Thread Safety',
     'Version',
     'Code Examples',
     'Related Functions'
@@ -766,7 +729,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
         my $remarks = %$sectionsref{'Remarks'};
         my $params = %$sectionsref{'Function Parameters'};
         my $returns = %$sectionsref{'Return Value'};
-        my $threadsafety = %$sectionsref{'Thread Safety'};
         my $version = %$sectionsref{'Version'};
         my $related = %$sectionsref{'Related Functions'};
         my $deprecated = %$sectionsref{'Deprecated'};
@@ -835,33 +797,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
                         $str .= "${whitespace}$_\n";
                     }
                 }
-            } elsif ($wikitype eq 'md') {
-                my $l;
-                $l = shift @lines;
-                die("Unexpected data parsing Markdown table") if (not $l =~ /\A\s*\|\s*\|\s*\|\s*\Z/);
-                $l = shift @lines;
-                die("Unexpected data parsing Markdown table") if (not $l =~ /\A\s*\|\s*\-*\s*\|\s*\-*\s*\|\s*\Z/);
-                while (scalar(@lines) >= 1) {
-                    $l = shift @lines;
-                    if ($l =~ /\A\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*\Z/) {
-                        my $name = $1;
-                        my $desc = $2;
-                        $name =~ s/\A\*\*(.*?)\*\*/$1/;
-                        $name =~ s/\A\'\'\'(.*?)\'\'\'/$1/;
-                        #print STDERR "FN: $fn   NAME: $name   DESC: $desc\n";
-                        my $whitespacelen = length($name) + 8;
-                        my $whitespace = ' ' x $whitespacelen;
-                        $desc = wordwrap($desc, -$whitespacelen);
-                        my @desclines = split /\n/, $desc;
-                        my $firstline = shift @desclines;
-                        $str .= "\\param $name $firstline\n";
-                        foreach (@desclines) {
-                            $str .= "${whitespace}$_\n";
-                        }
-                    } else {
-                        last;  # we seem to have run out of table.
-                    }
-                }
             } else {
                 die("write me");
             }
@@ -881,21 +816,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
             my @desclines = split /\n/, $r;
             my $firstline = shift @desclines;
             $str .= "$retstr $firstline\n";
-            foreach (@desclines) {
-                $str .= "${whitespace}$_\n";
-            }
-        }
-
-        if (defined $threadsafety) {
-            # !!! FIXME: lots of code duplication in all of these.
-            $str .= "\n" if $addblank; $addblank = 1;
-            my $v = dewikify($wikitype, $threadsafety);
-            my $whitespacelen = length("\\threadsafety") + 1;
-            my $whitespace = ' ' x $whitespacelen;
-            $v = wordwrap($v, -$whitespacelen);
-            my @desclines = split /\n/, $v;
-            my $firstline = shift @desclines;
-            $str .= "\\threadsafety $firstline\n";
             foreach (@desclines) {
                 $str .= "${whitespace}$_\n";
             }
@@ -925,7 +845,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
                 s/\A(\:|\* )//;
                 s/\(\)\Z//;  # Convert "SDL_Func()" to "SDL_Func"
                 s/\[\[(.*?)\]\]/$1/;  # in case some wikilinks remain.
-                s/\[(.*?)\]\(.*?\)/$1/;  # in case some wikilinks remain.
                 s/\A\/*//;
                 $str .= "\\sa $_\n";
             }
@@ -987,17 +906,10 @@ if ($copy_direction == 1) {  # --copy-to-headers
     }
 
 } elsif ($copy_direction == -1) { # --copy-to-wiki
-
-    if (defined $changeformat) {
-        $dewikify_mode = $changeformat;
-        $wordwrap_mode = $changeformat;
-    }
-
     foreach (keys %headerfuncs) {
         my $fn = $_;
         next if not $headerfuncshasdoxygen{$fn};
-        my $origwikitype = defined $wikitypes{$fn} ? $wikitypes{$fn} : 'md';  # default to MarkDown for new stuff.
-        my $wikitype = (defined $changeformat) ? $changeformat : $origwikitype;
+        my $wikitype = defined $wikitypes{$fn} ? $wikitypes{$fn} : 'mediawiki';  # default to MediaWiki for new stuff FOR NOW.
         die("Unexpected wikitype '$wikitype'\n") if (($wikitype ne 'mediawiki') and ($wikitype ne 'md') and ($wikitype ne 'manpage'));
 
         #print("$fn\n"); next;
@@ -1135,21 +1047,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
                 }
                 $desc =~ s/[\s\n]+\Z//ms;
                 $sections{'Version'} = wordwrap(wikify($wikitype, $desc)) . "\n";
-            } elsif ($l =~ /\A\\threadsafety\s+(.*)\Z/) {
-                my $desc = $1;
-                while (@doxygenlines) {
-                    my $subline = $doxygenlines[0];
-                    $subline =~ s/\A\s*//;
-                    last if $subline =~ /\A\\/;  # some sort of doxygen command, assume we're past this thing.
-                    shift @doxygenlines;  # dump this line from the array; we're using it.
-                    if ($subline eq '') {  # empty line, make sure it keeps the newline char.
-                        $desc .= "\n";
-                    } else {
-                        $desc .= " $subline";
-                    }
-                }
-                $desc =~ s/[\s\n]+\Z//ms;
-                $sections{'Thread Safety'} = wordwrap(wikify($wikitype, $desc)) . "\n";
             } elsif ($l =~ /\A\\sa\s+(.*)\Z/) {
                 my $sa = $1;
                 $sa =~ s/\(\)\Z//;  # Convert "SDL_Func()" to "SDL_Func"
@@ -1228,25 +1125,8 @@ if ($copy_direction == 1) {  # --copy-to-headers
             push @$wikisectionorderref, '[footer]';
         }
 
-        # If changing format, convert things that otherwise are passed through unmolested.
-        if (defined $changeformat) {
-            if (($dewikify_mode eq 'md') and ($origwikitype eq 'mediawiki')) {
-                $$sectionsref{'[footer]'} =~ s/\[\[(Category[a-zA-Z0-9_]+)\]\]/[$1]($1)/g;
-            } elsif (($dewikify_mode eq 'mediawiki') and ($origwikitype eq 'md')) {
-                $$sectionsref{'[footer]'} =~ s/\[(Category[a-zA-Z0-9_]+)\]\(.*?\)/[[$1]]/g;
-            }
-
-            foreach (keys %only_wiki_sections) {
-                my $sect = $_;
-                if (defined $$sectionsref{$sect}) {
-                    $$sectionsref{$sect} = wikify($wikitype, dewikify($origwikitype, $$sectionsref{$sect}));
-                }
-            }
-        }
-
         # !!! FIXME: This won't be CategoryAPI if we eventually handle things other than functions.
         my $footer = $$sectionsref{'[footer]'};
-
         if ($wikitype eq 'mediawiki') {
             $footer =~ s/\[\[CategoryAPI\]\],?\s*//g;
             $footer = '[[CategoryAPI]]' . (($footer eq '') ? "\n" : ", $footer");
@@ -1257,11 +1137,10 @@ if ($copy_direction == 1) {  # --copy-to-headers
         $$sectionsref{'[footer]'} = $footer;
 
         if (defined $wikipreamble) {
-            my $wikified_preamble = wikify($wikitype, $wikipreamble);
             if ($wikitype eq 'mediawiki') {
-                print FH "====== $wikified_preamble ======\n";
+                print FH "====== $wikipreamble ======\n";
             } elsif ($wikitype eq 'md') {
-                print FH "###### $wikified_preamble\n";
+                print FH "###### $wikipreamble\n";
             } else { die("Unexpected wikitype '$wikitype'\n"); }
         }
 
@@ -1306,12 +1185,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
 
         print FH "\n\n";
         close(FH);
-
-        if (defined $changeformat and ($origwikitype ne $wikitype)) {
-            system("cd '$wikipath' ; git mv '$_.${origwikitype}' '$_.${wikitype}'");
-            unlink("$wikipath/$_.${origwikitype}");
-        }
-
         rename($path, "$wikipath/$_.${wikitype}") or die("Can't rename '$path' to '$wikipath/$_.${wikitype}': $!\n");
     }
 
@@ -1366,7 +1239,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
         my $params = %$sectionsref{'Function Parameters'};
         my $returns = %$sectionsref{'Return Value'};
         my $version = %$sectionsref{'Version'};
-        my $threadsafety = %$sectionsref{'Thread Safety'};
         my $related = %$sectionsref{'Related Functions'};
         my $examples = %$sectionsref{'Code Examples'};
         my $deprecated = %$sectionsref{'Deprecated'};
@@ -1457,28 +1329,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
                     $str .= ".I $name\n";
                     $str .= "$desc\n";
                 }
-            } elsif ($wikitype eq 'md') {
-                my $l;
-                $l = shift @lines;
-                die("Unexpected data parsing Markdown table") if (not $l =~ /\A\s*\|\s*\|\s*\|\s*\Z/);
-                $l = shift @lines;
-                die("Unexpected data parsing Markdown table") if (not $l =~ /\A\s*\|\s*\-*\s*\|\s*\-*\s*\|\s*\Z/);
-                while (scalar(@lines) >= 1) {
-                    $l = shift @lines;
-                    if ($l =~ /\A\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*\Z/) {
-                        my $name = $1;
-                        my $desc = $2;
-                        $name =~ s/\A\*\*(.*?)\*\*/$1/;
-                        $name =~ s/\A\'\'\'(.*?)\'\'\'/$1/;
-                        $desc = dewikify($wikitype, $desc);
-
-                        $str .= ".TP\n";
-                        $str .= ".I $name\n";
-                        $str .= "$desc\n";
-                    } else {
-                        last;  # we seem to have run out of table.
-                    }
-                }
             } else {
                 die("write me");
             }
@@ -1496,11 +1346,6 @@ if ($copy_direction == 1) {  # --copy-to-headers
             $dewikify_manpage_code_indent = 1;
         }
 
-        if (defined $threadsafety) {
-            $str .= ".SH THREAD SAFETY\n";
-            $str .= dewikify($wikitype, $threadsafety) . "\n";
-        }
-
         if (defined $version) {
             $str .= ".SH AVAILABILITY\n";
             $str .= dewikify($wikitype, $version) . "\n";
@@ -1516,11 +1361,8 @@ if ($copy_direction == 1) {  # --copy-to-headers
                 s/\A(\:|\* )//;
                 s/\(\)\Z//;  # Convert "SDL_Func()" to "SDL_Func"
                 s/\[\[(.*?)\]\]/$1/;  # in case some wikilinks remain.
-                s/\[(.*?)\]\(.*?\)/$1/;  # in case some wikilinks remain.
-                s/\A\*\s*\Z//;
                 s/\A\/*//;
                 s/\A\.BR\s+//;  # dewikify added this, but we want to handle it.
-                s/\A\.I\s+//;  # dewikify added this, but we want to handle it.
                 s/\A\s+//;
                 s/\s+\Z//;
                 next if $_ eq '';

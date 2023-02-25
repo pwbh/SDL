@@ -25,7 +25,7 @@ Code
         {
             switch (event.type)
             {
-                case SDL_EVENT_QUIT:
+                case SDL_QUIT:
                     return 1;
                 default:
                     break;

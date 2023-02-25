@@ -18,11 +18,13 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 /* An implementation of mutexes using semaphores */
 
+#include "SDL_thread.h"
 #include "SDL_systhread_c.h"
+
 
 struct SDL_mutex
 {
@@ -38,7 +40,7 @@ SDL_CreateMutex(void)
     SDL_mutex *mutex;
 
     /* Allocate mutex memory */
-    mutex = (SDL_mutex *)SDL_calloc(1, sizeof(*mutex));
+    mutex = (SDL_mutex *) SDL_calloc(1, sizeof(*mutex));
 
 #if !SDL_THREADS_DISABLED
     if (mutex) {
@@ -59,7 +61,8 @@ SDL_CreateMutex(void)
 }
 
 /* Free the mutex */
-void SDL_DestroyMutex(SDL_mutex *mutex)
+void
+SDL_DestroyMutex(SDL_mutex * mutex)
 {
     if (mutex) {
         if (mutex->sem) {
@@ -70,7 +73,8 @@ void SDL_DestroyMutex(SDL_mutex *mutex)
 }
 
 /* Lock the mutex */
-int SDL_LockMutex(SDL_mutex *mutex) SDL_NO_THREAD_SAFETY_ANALYSIS /* clang doesn't know about NULL mutexes */
+int
+SDL_LockMutex(SDL_mutex * mutex)
 {
 #if SDL_THREADS_DISABLED
     return 0;
@@ -78,7 +82,7 @@ int SDL_LockMutex(SDL_mutex *mutex) SDL_NO_THREAD_SAFETY_ANALYSIS /* clang doesn
     SDL_threadID this_thread;
 
     if (mutex == NULL) {
-        return 0;
+        return SDL_InvalidParamError("mutex");
     }
 
     this_thread = SDL_ThreadID();
@@ -99,7 +103,8 @@ int SDL_LockMutex(SDL_mutex *mutex) SDL_NO_THREAD_SAFETY_ANALYSIS /* clang doesn
 }
 
 /* try Lock the mutex */
-int SDL_TryLockMutex(SDL_mutex *mutex)
+int
+SDL_TryLockMutex(SDL_mutex * mutex)
 {
 #if SDL_THREADS_DISABLED
     return 0;
@@ -108,7 +113,7 @@ int SDL_TryLockMutex(SDL_mutex *mutex)
     SDL_threadID this_thread;
 
     if (mutex == NULL) {
-        return 0;
+        return SDL_InvalidParamError("mutex");
     }
 
     this_thread = SDL_ThreadID();
@@ -131,13 +136,14 @@ int SDL_TryLockMutex(SDL_mutex *mutex)
 }
 
 /* Unlock the mutex */
-int SDL_UnlockMutex(SDL_mutex *mutex) SDL_NO_THREAD_SAFETY_ANALYSIS /* clang doesn't know about NULL mutexes */
+int
+SDL_mutexV(SDL_mutex * mutex)
 {
 #if SDL_THREADS_DISABLED
     return 0;
 #else
     if (mutex == NULL) {
-        return 0;
+        return SDL_InvalidParamError("mutex");
     }
 
     /* If we don't own the mutex, we can't unlock it */
@@ -159,3 +165,5 @@ int SDL_UnlockMutex(SDL_mutex *mutex) SDL_NO_THREAD_SAFETY_ANALYSIS /* clang doe
     return 0;
 #endif /* SDL_THREADS_DISABLED */
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

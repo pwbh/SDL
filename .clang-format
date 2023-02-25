@@ -16,8 +16,8 @@ AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 
-AlwaysBreakAfterDefinitionReturnType: None
-AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: All
+AlwaysBreakAfterReturnType: AllDefinitions
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: MultiLine
 
@@ -35,7 +35,7 @@ BraceWrapping:
   AfterUnion: true
   AfterExternBlock: false
   BeforeElse: false
-  BeforeWhile: false
+  BeforeWhile: true
   IndentBraces: false
   SplitEmptyFunction: true
   SplitEmptyRecord: true
@@ -62,8 +62,7 @@ IndentGotoLabels: true
 IndentPPDirectives: None
 IndentExternBlock: NoIndent
 
-PointerAlignment: Right
-SpaceAfterCStyleCast: false
+SpaceAfterCStyleCast: true
 SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: false
 SpacesInContainerLiterals: true

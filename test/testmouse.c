@@ -10,8 +10,7 @@
   freely.
 */
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include "SDL.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -19,21 +18,20 @@
 
 #include <stdlib.h> /* exit() */
 
-#ifdef __IOS__
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 480
+#ifdef __IPHONEOS__
+#define SCREEN_WIDTH    320
+#define SCREEN_HEIGHT   480
 #else
-#define SCREEN_WIDTH  640
-#define SCREEN_HEIGHT 480
+#define SCREEN_WIDTH    640
+#define SCREEN_HEIGHT   480
 #endif
 
 static SDL_Window *window;
 
-typedef struct _Object
-{
+typedef struct _Object {
     struct _Object *next;
 
-    float x1, y1, x2, y2;
+    int x1, y1, x2, y2;
     Uint8 r, g, b;
 
     SDL_bool isRect;
@@ -51,12 +49,13 @@ static float wheel_y = SCREEN_HEIGHT * 0.5f;
 
 static SDL_bool done = SDL_FALSE;
 
-void DrawObject(SDL_Renderer *renderer, Object *object)
+void
+DrawObject(SDL_Renderer * renderer, Object * object)
 {
     SDL_SetRenderDrawColor(renderer, object->r, object->g, object->b, 255);
 
     if (object->isRect) {
-        SDL_FRect rect;
+        SDL_Rect rect;
 
         if (object->x1 > object->x2) {
             rect.x = object->x2;
@@ -74,13 +73,15 @@ void DrawObject(SDL_Renderer *renderer, Object *object)
             rect.h = object->y2 - object->y1;
         }
 
+        /* SDL_RenderDrawRect(renderer, &rect); */
         SDL_RenderFillRect(renderer, &rect);
     } else {
-        SDL_RenderLine(renderer, object->x1, object->y1, object->x2, object->y2);
+        SDL_RenderDrawLine(renderer, object->x1, object->y1, object->x2, object->y2);
     }
 }
 
-void DrawObjects(SDL_Renderer *renderer)
+void
+DrawObjects(SDL_Renderer * renderer)
 {
     Object *next = objects;
     while (next != NULL) {
@@ -89,7 +90,8 @@ void DrawObjects(SDL_Renderer *renderer)
     }
 }
 
-void AppendObject(Object *object)
+void
+AppendObject(Object *object)
 {
     if (objects) {
         Object *next = objects;
@@ -102,7 +104,8 @@ void AppendObject(Object *object)
     }
 }
 
-void loop(void *arg)
+void
+loop(void *arg)
 {
     SDL_Renderer *renderer = (SDL_Renderer *)arg;
     SDL_Event event;
@@ -110,34 +113,35 @@ void loop(void *arg)
     /* Check for events */
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
-        case SDL_EVENT_MOUSE_WHEEL:
-            if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
-                event.wheel.x *= -1;
-                event.wheel.y *= -1;
-            }
-            if (event.wheel.x != 0.0f) {
-                wheel_x_active = SDL_TRUE;
-                /* "positive to the right and negative to the left"  */
-                wheel_x += event.wheel.x * 10.0f;
-            }
-            if (event.wheel.x != 0.0f) {
-                wheel_y_active = SDL_TRUE;
-                /* "positive away from the user and negative towards the user" */
-                wheel_y -= event.wheel.x * 10.0f;
-            }
-            break;
-
-        case SDL_EVENT_MOUSE_MOTION:
-            if (active == NULL) {
+        case SDL_MOUSEWHEEL:
+                if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+                        event.wheel.preciseX *= -1.0f;
+                        event.wheel.preciseY *= -1.0f;
+                        event.wheel.x *= -1;
+                        event.wheel.y *= -1;
+                }
+                if (event.wheel.preciseX != 0.0f) {
+                        wheel_x_active = SDL_TRUE;
+                        /* "positive to the right and negative to the left"  */
+                        wheel_x += event.wheel.preciseX * 10.0f;
+                }
+                if (event.wheel.preciseY != 0.0f) {
+                        wheel_y_active = SDL_TRUE;
+                        /* "positive away from the user and negative towards the user" */
+                        wheel_y -= event.wheel.preciseY * 10.0f;
+                }
                 break;
-            }
+
+        case SDL_MOUSEMOTION:
+            if (!active)
+                break;
 
             active->x2 = event.motion.x;
             active->y2 = event.motion.y;
             break;
 
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            if (active == NULL) {
+        case SDL_MOUSEBUTTONDOWN:
+            if (!active) {
                 active = SDL_calloc(1, sizeof(*active));
                 active->x1 = active->x2 = event.button.x;
                 active->y1 = active->y2 = event.button.y;
@@ -145,52 +149,24 @@ void loop(void *arg)
             }
 
             switch (event.button.button) {
-            case SDL_BUTTON_LEFT:
-                active->r = 255;
-                buttons |= SDL_BUTTON_LMASK;
-                break;
-            case SDL_BUTTON_MIDDLE:
-                active->g = 255;
-                buttons |= SDL_BUTTON_MMASK;
-                break;
-            case SDL_BUTTON_RIGHT:
-                active->b = 255;
-                buttons |= SDL_BUTTON_RMASK;
-                break;
-            case SDL_BUTTON_X1:
-                active->r = 255;
-                active->b = 255;
-                buttons |= SDL_BUTTON_X1MASK;
-                break;
-            case SDL_BUTTON_X2:
-                active->g = 255;
-                active->b = 255;
-                buttons |= SDL_BUTTON_X2MASK;
-                break;
+            case SDL_BUTTON_LEFT:   active->r = 255; buttons |= SDL_BUTTON_LMASK; break;
+            case SDL_BUTTON_MIDDLE: active->g = 255; buttons |= SDL_BUTTON_MMASK; break;
+            case SDL_BUTTON_RIGHT:  active->b = 255; buttons |= SDL_BUTTON_RMASK; break;
+            case SDL_BUTTON_X1:     active->r = 255; active->b = 255; buttons |= SDL_BUTTON_X1MASK; break;
+            case SDL_BUTTON_X2:     active->g = 255; active->b = 255; buttons |= SDL_BUTTON_X2MASK; break;
             }
             break;
 
-        case SDL_EVENT_MOUSE_BUTTON_UP:
-            if (active == NULL) {
+        case SDL_MOUSEBUTTONUP:
+            if (!active)
                 break;
-            }
 
             switch (event.button.button) {
-            case SDL_BUTTON_LEFT:
-                buttons &= ~SDL_BUTTON_LMASK;
-                break;
-            case SDL_BUTTON_MIDDLE:
-                buttons &= ~SDL_BUTTON_MMASK;
-                break;
-            case SDL_BUTTON_RIGHT:
-                buttons &= ~SDL_BUTTON_RMASK;
-                break;
-            case SDL_BUTTON_X1:
-                buttons &= ~SDL_BUTTON_X1MASK;
-                break;
-            case SDL_BUTTON_X2:
-                buttons &= ~SDL_BUTTON_X2MASK;
-                break;
+            case SDL_BUTTON_LEFT:   buttons &= ~SDL_BUTTON_LMASK; break;
+            case SDL_BUTTON_MIDDLE: buttons &= ~SDL_BUTTON_MMASK; break;
+            case SDL_BUTTON_RIGHT:  buttons &= ~SDL_BUTTON_RMASK; break;
+            case SDL_BUTTON_X1:     buttons &= ~SDL_BUTTON_X1MASK; break;
+            case SDL_BUTTON_X2:     buttons &= ~SDL_BUTTON_X2MASK; break;
             }
 
             if (buttons == 0) {
@@ -199,8 +175,8 @@ void loop(void *arg)
             }
             break;
 
-        case SDL_EVENT_KEY_DOWN:
-        case SDL_EVENT_KEY_UP:
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
             switch (event.key.keysym.sym) {
             case SDLK_LSHIFT:
                 isRect = (event.key.state == SDL_PRESSED);
@@ -211,7 +187,7 @@ void loop(void *arg)
             }
             break;
 
-        case SDL_EVENT_QUIT:
+        case SDL_QUIT:
             done = SDL_TRUE;
             break;
 
@@ -226,17 +202,16 @@ void loop(void *arg)
     /* Mouse wheel */
     SDL_SetRenderDrawColor(renderer, 0, 255, 128, 255);
     if (wheel_x_active) {
-        SDL_RenderLine(renderer, wheel_x, 0.0f, wheel_x, (float)SCREEN_HEIGHT);
+        SDL_RenderDrawLine(renderer, (int)wheel_x, 0, (int)wheel_x, SCREEN_HEIGHT);
     }
     if (wheel_y_active) {
-        SDL_RenderLine(renderer, 0.0f, wheel_y, (float)SCREEN_WIDTH, wheel_y);
+        SDL_RenderDrawLine(renderer, 0, (int)wheel_y, SCREEN_WIDTH, (int)wheel_y);
     }
 
     /* Objects from mouse clicks */
     DrawObjects(renderer);
-    if (active) {
+    if (active)
         DrawObject(renderer, active);
-    }
 
     SDL_RenderPresent(renderer);
 
@@ -247,7 +222,8 @@ void loop(void *arg)
 #endif
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     SDL_Renderer *renderer;
 
@@ -269,7 +245,7 @@ int main(int argc, char *argv[])
         return SDL_FALSE;
     }
 
-    renderer = SDL_CreateRenderer(window, NULL, 0);
+    renderer = SDL_CreateRenderer(window, -1, 0);
     if (renderer == NULL) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create renderer: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
@@ -292,3 +268,5 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

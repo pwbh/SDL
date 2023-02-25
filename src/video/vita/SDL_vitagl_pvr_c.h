@@ -24,8 +24,11 @@
 
 #include "SDL_vitavideo.h"
 
-extern SDL_GLContext VITA_GL_CreateContext(_THIS, SDL_Window *window);
+extern SDL_GLContext VITA_GL_CreateContext(_THIS, SDL_Window * window);
 extern int VITA_GL_LoadLibrary(_THIS, const char *path);
-extern SDL_FunctionPointer VITA_GL_GetProcAddress(_THIS, const char *proc);
+extern void *VITA_GL_GetProcAddress(_THIS, const char *proc);
+
 
 #endif /* SDL_vitagl_pvr_c_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

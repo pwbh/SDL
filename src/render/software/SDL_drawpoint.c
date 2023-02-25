@@ -18,16 +18,18 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_RENDER_SW && !SDL_RENDER_DISABLED
 
 #include "SDL_draw.h"
 #include "SDL_drawpoint.h"
 
-int SDL_DrawPoint(SDL_Surface *dst, int x, int y, Uint32 color)
+
+int
+SDL_DrawPoint(SDL_Surface * dst, int x, int y, Uint32 color)
 {
-    if (dst == NULL) {
+    if (!dst) {
         return SDL_InvalidParamError("SDL_DrawPoint(): dst");
     }
 
@@ -59,15 +61,16 @@ int SDL_DrawPoint(SDL_Surface *dst, int x, int y, Uint32 color)
     return 0;
 }
 
-int SDL_DrawPoints(SDL_Surface *dst, const SDL_Point *points, int count,
-                   Uint32 color)
+int
+SDL_DrawPoints(SDL_Surface * dst, const SDL_Point * points, int count,
+               Uint32 color)
 {
     int minx, miny;
     int maxx, maxy;
     int i;
     int x, y;
 
-    if (dst == NULL) {
+    if (!dst) {
         return SDL_InvalidParamError("SDL_DrawPoints(): dst");
     }
 
@@ -107,3 +110,5 @@ int SDL_DrawPoints(SDL_Surface *dst, const SDL_Point *points, int count,
 }
 
 #endif /* SDL_VIDEO_RENDER_SW && !SDL_RENDER_DISABLED */
+
+/* vi: set ts=4 sw=4 expandtab: */

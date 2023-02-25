@@ -18,7 +18,8 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+
+#include "../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_WAYLAND || SDL_VIDEO_DRIVER_X11
 
@@ -315,11 +316,11 @@ function process_line
 {
     sym=$(echo "$1" | awk '{print $3}')
     code=$(echo "$1" | sed 's,.*_EVDEVK(\(0x[0-9A-Fa-f]*\)).*,\1,')
-    value=$(grep -E "#define ${sym}\s" -R /usr/include/X11 | awk '{print $3}')
+    value=$(egrep "#define ${sym}\s" -R /usr/include/X11 | awk '{print $3}')
     printf "    { 0x%.8X, 0x%.3x },    /* $sym */\n" $value $code
 }
 
-grep -F "/* Use: " /usr/include/xkbcommon/xkbcommon-keysyms.h | grep -F _EVDEVK | while read line; do
+fgrep "/* Use: " /usr/include/xkbcommon/xkbcommon-keysyms.h | fgrep _EVDEVK | while read line; do
     process_line "$line"
 done
 #endif
@@ -436,3 +437,5 @@ SDL_GetScancodeFromKeySym(Uint32 keysym, Uint32 keycode)
 }
 
 #endif /* SDL_VIDEO_DRIVER_WAYLAND */
+
+/* vi: set ts=4 sw=4 expandtab: */

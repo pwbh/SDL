@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 2022 Valve Corporation
+  Copyright (C) 2021 Valve Corporation
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,13 +18,12 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 // Purpose: A wrapper implementing "HID" API for Android
 //
 //          This layer glues the hidapi API to Android's USB and BLE stack.
 
-#include "hid.h"
 
 // Common to stub version and non-stub version of functions
 #include <jni.h>
@@ -51,6 +50,7 @@
 
 #if !SDL_HIDAPI_DISABLED
 
+#include "SDL_hints.h"
 #include "../../core/android/SDL_android.h"
 
 #define hid_init                        PLATFORM_hid_init
@@ -1429,15 +1429,3 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceFeatureReport)
 }
 
 #endif /* SDL_HIDAPI_DISABLED */
-
-extern "C"
-JNINativeMethod HIDDeviceManager_tab[8] = {
-        { "HIDDeviceRegisterCallback", "()V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceRegisterCallback) },
-        { "HIDDeviceReleaseCallback", "()V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReleaseCallback) },
-        { "HIDDeviceConnected", "(ILjava/lang/String;IILjava/lang/String;ILjava/lang/String;Ljava/lang/String;IIII)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected) },
-        { "HIDDeviceOpenPending", "(I)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending) },
-        { "HIDDeviceOpenResult", "(IZ)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult) },
-        { "HIDDeviceDisconnected", "(I)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected) },
-        { "HIDDeviceInputReport", "(I[B)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport) },
-        { "HIDDeviceFeatureReport", "(I[B)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceFeatureReport) }
-};

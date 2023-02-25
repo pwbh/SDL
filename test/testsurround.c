@@ -11,22 +11,23 @@
 */
 
 /* Program to test surround sound audio channels */
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include "SDL_config.h"
+
+#include "SDL.h"
 
 static int total_channels;
 static int active_channel;
 
-#define SAMPLE_RATE_HZ        48000
-#define QUICK_TEST_TIME_MSEC  100
+#define SAMPLE_RATE_HZ 48000
+#define QUICK_TEST_TIME_MSEC 100
 #define CHANNEL_TEST_TIME_SEC 5
-#define MAX_AMPLITUDE         SDL_MAX_SINT16
+#define MAX_AMPLITUDE SDL_MAX_SINT16
 
-#define SINE_FREQ_HZ     500
+#define SINE_FREQ_HZ 500
 #define LFE_SINE_FREQ_HZ 50
 
 /* The channel layout is defined in SDL_audio.h */
-const char *
+const char*
 get_channel_name(int channel_index, int channel_count)
 {
     switch (channel_index) {
@@ -91,9 +92,9 @@ is_lfe_channel(int channel_index, int channel_count)
 }
 
 void SDLCALL
-fill_buffer(void *unused, Uint8 *stream, int len)
+fill_buffer(void* unused, Uint8* stream, int len)
 {
-    Sint16 *buffer = (Sint16 *)stream;
+    Sint16* buffer = (Sint16*)stream;
     int samples = len / sizeof(Sint16);
     static int total_samples = 0;
     int i;
@@ -131,7 +132,8 @@ fill_buffer(void *unused, Uint8 *stream, int len)
     }
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     int i;
 
@@ -179,7 +181,7 @@ int main(int argc, char *argv[])
         total_channels = spec.channels;
         active_channel = 0;
 
-        SDL_PlayAudioDevice(dev);
+        SDL_PauseAudioDevice(dev, 0);
 
         for (j = 0; j < total_channels; j++) {
             int sine_freq = is_lfe_channel(j, total_channels) ? LFE_SINE_FREQ_HZ : SINE_FREQ_HZ;
@@ -200,3 +202,4 @@ int main(int argc, char *argv[])
     SDL_Quit();
     return 0;
 }
+

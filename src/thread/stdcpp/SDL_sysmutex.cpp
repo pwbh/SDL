@@ -18,9 +18,10 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 extern "C" {
+#include "SDL_thread.h"
 #include "SDL_systhread_c.h"
 }
 
@@ -29,15 +30,17 @@ extern "C" {
 #include "SDL_sysmutex_c.h"
 #include <Windows.h>
 
+
 /* Create a mutex */
-extern "C" SDL_mutex *
+extern "C"
+SDL_mutex *
 SDL_CreateMutex(void)
 {
     /* Allocate and initialize the mutex */
     try {
-        SDL_mutex *mutex = new SDL_mutex;
+        SDL_mutex * mutex = new SDL_mutex;
         return mutex;
-    } catch (std::system_error &ex) {
+    } catch (std::system_error & ex) {
         SDL_SetError("unable to create a C++ mutex: code=%d; %s", ex.code(), ex.what());
         return NULL;
     } catch (std::bad_alloc &) {
@@ -47,37 +50,39 @@ SDL_CreateMutex(void)
 }
 
 /* Free the mutex */
-extern "C" void
-SDL_DestroyMutex(SDL_mutex *mutex)
+extern "C"
+void
+SDL_DestroyMutex(SDL_mutex * mutex)
 {
-    if (mutex != NULL) {
+    if (mutex) {
         delete mutex;
     }
 }
 
-/* Lock the mutex */
-extern "C" int
-SDL_LockMutex(SDL_mutex *mutex) SDL_NO_THREAD_SAFETY_ANALYSIS /* clang doesn't know about NULL mutexes */
+/* Lock the semaphore */
+extern "C"
+int
+SDL_mutexP(SDL_mutex * mutex)
 {
     if (mutex == NULL) {
-        return 0;
+        return SDL_InvalidParamError("mutex");
     }
 
     try {
         mutex->cpp_mutex.lock();
         return 0;
-    } catch (std::system_error &ex) {
+    } catch (std::system_error & ex) {
         return SDL_SetError("unable to lock a C++ mutex: code=%d; %s", ex.code(), ex.what());
     }
 }
 
 /* TryLock the mutex */
-int SDL_TryLockMutex(SDL_mutex *mutex)
+int
+SDL_TryLockMutex(SDL_mutex * mutex)
 {
     int retval = 0;
-
     if (mutex == NULL) {
-        return 0;
+        return SDL_InvalidParamError("mutex");
     }
 
     if (mutex->cpp_mutex.try_lock() == false) {
@@ -87,13 +92,16 @@ int SDL_TryLockMutex(SDL_mutex *mutex)
 }
 
 /* Unlock the mutex */
-extern "C" int
-SDL_UnlockMutex(SDL_mutex *mutex) SDL_NO_THREAD_SAFETY_ANALYSIS /* clang doesn't know about NULL mutexes */
+extern "C"
+int
+SDL_mutexV(SDL_mutex * mutex)
 {
     if (mutex == NULL) {
-        return 0;
+        return SDL_InvalidParamError("mutex");
     }
 
     mutex->cpp_mutex.unlock();
     return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

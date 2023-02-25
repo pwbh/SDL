@@ -22,17 +22,23 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+/*
+ * includes
+ */
+#include "SDL.h"
+
+#ifndef SDL_HAPTIC_DISABLED
 
 static SDL_Haptic *haptic;
 
+
 /**
- * \brief The entry point of this force feedback demo.
- * \param[in] argc Number of arguments.
- * \param[in] argv Array of argc arguments.
+ * @brief The entry point of this force feedback demo.
+ * @param[in] argc Number of arguments.
+ * @param[in] argv Array of argc arguments.
  */
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     int i;
     char *name;
@@ -48,9 +54,9 @@ int main(int argc, char **argv)
         name = argv[1];
         if ((SDL_strcmp(name, "--help") == 0) || (SDL_strcmp(name, "-h") == 0)) {
             SDL_Log("USAGE: %s [device]\n"
-                    "If device is a two-digit number it'll use it as an index, otherwise\n"
-                    "it'll use it as if it were part of the device's name.\n",
-                    argv[0]);
+                   "If device is a two-digit number it'll use it as an index, otherwise\n"
+                   "it'll use it as if it were part of the device's name.\n",
+                   argv[0]);
             return 0;
         }
 
@@ -73,14 +79,13 @@ int main(int argc, char **argv)
         /* Try to find matching device */
         else {
             for (i = 0; i < SDL_NumHaptics(); i++) {
-                if (SDL_strstr(SDL_HapticName(i), name) != NULL) {
+                if (SDL_strstr(SDL_HapticName(i), name) != NULL)
                     break;
-                }
             }
 
             if (i >= SDL_NumHaptics()) {
                 SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to find device matching '%s', aborting.\n",
-                             name);
+                       name);
                 return 1;
             }
         }
@@ -88,7 +93,7 @@ int main(int argc, char **argv)
         haptic = SDL_HapticOpen(i);
         if (haptic == NULL) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to create the haptic device: %s\n",
-                         SDL_GetError());
+                   SDL_GetError());
             return 1;
         }
         SDL_Log("Device: %s\n", SDL_HapticName(i));
@@ -110,8 +115,8 @@ int main(int argc, char **argv)
     }
     SDL_Log("Playing 2 second rumble at 0.5 magnitude.\n");
     if (SDL_HapticRumblePlay(haptic, 0.5, 5000) != 0) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to play rumble: %s\n", SDL_GetError());
-        return 1;
+       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to play rumble: %s\n", SDL_GetError() );
+       return 1;
     }
     SDL_Delay(2000);
     SDL_Log("Stopping rumble.\n");
@@ -119,16 +124,26 @@ int main(int argc, char **argv)
     SDL_Delay(2000);
     SDL_Log("Playing 2 second rumble at 0.3 magnitude.\n");
     if (SDL_HapticRumblePlay(haptic, 0.3f, 5000) != 0) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to play rumble: %s\n", SDL_GetError());
-        return 1;
+       SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to play rumble: %s\n", SDL_GetError() );
+       return 1;
     }
     SDL_Delay(2000);
 
     /* Quit */
-    if (haptic != NULL) {
+    if (haptic != NULL)
         SDL_HapticClose(haptic);
-    }
     SDL_Quit();
 
     return 0;
 }
+
+#else
+
+int
+main(int argc, char *argv[])
+{
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL compiled without Haptic support.\n");
+    return 1;
+}
+
+#endif

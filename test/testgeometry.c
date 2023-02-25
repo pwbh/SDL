@@ -13,14 +13,14 @@
 /* Simple program:  draw a RGB triangle, with texture  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
 
-#include <SDL3/SDL_test_common.h>
-#include <SDL3/SDL_main.h>
+#include "SDL_test_common.h"
 #include "testutils.h"
 
 static SDLTest_CommonState *state;
@@ -41,7 +41,8 @@ quit(int rc)
     exit(rc);
 }
 
-int LoadSprite(const char *file)
+int
+LoadSprite(const char *file)
 {
     int i;
 
@@ -49,20 +50,22 @@ int LoadSprite(const char *file)
         /* This does the SDL_LoadBMP step repeatedly, but that's OK for test code. */
         sprites[i] = LoadTexture(state->renderers[i], file, SDL_TRUE, &sprite_w, &sprite_h);
         if (!sprites[i]) {
-            return -1;
+            return (-1);
         }
         if (SDL_SetTextureBlendMode(sprites[i], blendMode) < 0) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set blend mode: %s\n", SDL_GetError());
             SDL_DestroyTexture(sprites[i]);
-            return -1;
+            return (-1);
         }
     }
 
     /* We're ready to roll. :) */
-    return 0;
+    return (0);
 }
 
-void loop()
+
+void
+loop()
 {
     int i;
     SDL_Event event;
@@ -70,20 +73,20 @@ void loop()
     /* Check for events */
     while (SDL_PollEvent(&event)) {
 
-        if (event.type == SDL_EVENT_MOUSE_MOTION) {
+        if (event.type == SDL_MOUSEMOTION) {
             if (event.motion.state) {
-                float xrel, yrel;
+                int xrel, yrel;
                 int window_w, window_h;
                 SDL_Window *window = SDL_GetWindowFromID(event.motion.windowID);
                 SDL_GetWindowSize(window, &window_w, &window_h);
                 xrel = event.motion.xrel;
                 yrel = event.motion.yrel;
-                if (event.motion.y < (float)window_h / 2.0f) {
+                if (event.motion.y < window_h / 2) {
                     angle += xrel;
                 } else {
                     angle -= xrel;
                 }
-                if (event.motion.x < (float)window_w / 2.0f) {
+                if (event.motion.x < window_w / 2) {
                     angle -= yrel;
                 } else {
                     angle += yrel;
@@ -96,9 +99,8 @@ void loop()
 
     for (i = 0; i < state->num_windows; ++i) {
         SDL_Renderer *renderer = state->renderers[i];
-        if (state->windows[i] == NULL) {
+        if (state->windows[i] == NULL)
             continue;
-        }
         SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
         SDL_RenderClear(renderer);
 
@@ -110,7 +112,7 @@ void loop()
             int cx, cy;
 
             /* Query the sizes */
-            SDL_GetRenderViewport(renderer, &viewport);
+            SDL_RenderGetViewport(renderer, &viewport);
             SDL_zeroa(verts);
             cx = viewport.x + viewport.w / 2;
             cy = viewport.y + viewport.h / 2;
@@ -161,19 +163,19 @@ void loop()
 #endif
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     int i;
     const char *icon = "icon.bmp";
-    Uint64 then, now;
-    Uint32 frames;
+    Uint32 then, now, frames;
 
     /* Enable standard application logging */
     SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
-    if (state == NULL) {
+    if (!state) {
         return 1;
     }
     for (i = 1; i < argc;) {
@@ -216,8 +218,8 @@ int main(int argc, char *argv[])
 
     /* Create the windows, initialize the renderers, and load the textures */
     sprites =
-        (SDL_Texture **)SDL_malloc(state->num_windows * sizeof(*sprites));
-    if (sprites == NULL) {
+        (SDL_Texture **) SDL_malloc(state->num_windows * sizeof(*sprites));
+    if (!sprites) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Out of memory!\n");
         quit(2);
     }
@@ -235,6 +237,7 @@ int main(int argc, char *argv[])
         }
     }
 
+
     srand((unsigned int)time(NULL));
 
     /* Main render loop */
@@ -248,17 +251,19 @@ int main(int argc, char *argv[])
     while (!done) {
         ++frames;
         loop();
-    }
+        }
 #endif
 
     /* Print out some timing information */
     now = SDL_GetTicks();
     if (now > then) {
-        double fps = ((double)frames * 1000) / (now - then);
+        double fps = ((double) frames * 1000) / (now - then);
         SDL_Log("%2.2f frames per second\n", fps);
     }
-
+    
     quit(0);
 
     return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

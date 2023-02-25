@@ -19,7 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+
 void SDL_WSCONS_Init();
 void SDL_WSCONS_Quit();
 
 void SDL_WSCONS_PumpEvents();
+

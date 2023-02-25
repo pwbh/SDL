@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../SDL_internal.h"
 
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
@@ -33,6 +33,8 @@
 
 /* Microsoft WAVE file loading routines */
 
+#include "SDL_hints.h"
+#include "SDL_audio.h"
 #include "SDL_wave.h"
 #include "SDL_audio_c.h"
 
@@ -41,7 +43,8 @@
  * Returns 0 on success, or -1 if the multiplication overflows, in which case f1
  * does not get modified.
  */
-static int SafeMult(size_t *f1, size_t f2)
+static int
+SafeMult(size_t *f1, size_t f2)
 {
     if (*f1 > 0 && SIZE_MAX / *f1 <= f2) {
         return -1;
@@ -63,24 +66,21 @@ typedef struct ADPCM_DecoderState
     void *cstate;           /* Decoding state for each channel. */
 
     /* ADPCM data. */
-    struct
-    {
+    struct {
         Uint8 *data;
         size_t size;
         size_t pos;
     } input;
 
     /* Current ADPCM block in the ADPCM data above. */
-    struct
-    {
+    struct {
         Uint8 *data;
         size_t size;
         size_t pos;
     } block;
 
     /* Decoded 16-bit PCM data. */
-    struct
-    {
+    struct {
         Sint16 *data;
         size_t size;
         size_t pos;
@@ -102,7 +102,8 @@ typedef struct MS_ADPCM_ChannelState
 } MS_ADPCM_ChannelState;
 
 #ifdef SDL_WAVE_DEBUG_LOG_FORMAT
-static void WaveDebugLogFormat(WaveFile *file)
+static void
+WaveDebugLogFormat(WaveFile *file)
 {
     WaveFormat *format = &file->format;
     const char *fmtstr = "WAVE file: %s, %u Hz, %s, %u bits, %u %s/s";
@@ -136,60 +137,55 @@ static void WaveDebugLogFormat(WaveFile *file)
         break;
     }
 
-#define SDL_WAVE_DEBUG_CHANNELCFG(STR, CODE) \
-    case CODE:                               \
-        wavechannel = STR;                   \
-        break;
-#define SDL_WAVE_DEBUG_CHANNELSTR(STR, CODE)                                        \
-    if (format->channelmask & CODE) {                                               \
-        SDL_strlcat(channelstr, channelstr[0] ? "-" STR : STR, sizeof(channelstr)); \
-    }
+#define SDL_WAVE_DEBUG_CHANNELCFG(STR, CODE) case CODE: wavechannel = STR; break;
+#define SDL_WAVE_DEBUG_CHANNELSTR(STR, CODE) if (format->channelmask & CODE) { \
+    SDL_strlcat(channelstr, channelstr[0] ? "-" STR : STR, sizeof(channelstr));}
 
     if (format->formattag == EXTENSIBLE_CODE && format->channelmask > 0) {
         switch (format->channelmask) {
-            SDL_WAVE_DEBUG_CHANNELCFG("1.0 Mono", 0x4)
-            SDL_WAVE_DEBUG_CHANNELCFG("1.1 Mono", 0xc)
-            SDL_WAVE_DEBUG_CHANNELCFG("2.0 Stereo", 0x3)
-            SDL_WAVE_DEBUG_CHANNELCFG("2.1 Stereo", 0xb)
-            SDL_WAVE_DEBUG_CHANNELCFG("3.0 Stereo", 0x7)
-            SDL_WAVE_DEBUG_CHANNELCFG("3.1 Stereo", 0xf)
-            SDL_WAVE_DEBUG_CHANNELCFG("3.0 Surround", 0x103)
-            SDL_WAVE_DEBUG_CHANNELCFG("3.1 Surround", 0x10b)
-            SDL_WAVE_DEBUG_CHANNELCFG("4.0 Quad", 0x33)
-            SDL_WAVE_DEBUG_CHANNELCFG("4.1 Quad", 0x3b)
-            SDL_WAVE_DEBUG_CHANNELCFG("4.0 Surround", 0x107)
-            SDL_WAVE_DEBUG_CHANNELCFG("4.1 Surround", 0x10f)
-            SDL_WAVE_DEBUG_CHANNELCFG("5.0", 0x37)
-            SDL_WAVE_DEBUG_CHANNELCFG("5.1", 0x3f)
-            SDL_WAVE_DEBUG_CHANNELCFG("5.0 Side", 0x607)
-            SDL_WAVE_DEBUG_CHANNELCFG("5.1 Side", 0x60f)
-            SDL_WAVE_DEBUG_CHANNELCFG("6.0", 0x137)
-            SDL_WAVE_DEBUG_CHANNELCFG("6.1", 0x13f)
-            SDL_WAVE_DEBUG_CHANNELCFG("6.0 Side", 0x707)
-            SDL_WAVE_DEBUG_CHANNELCFG("6.1 Side", 0x70f)
-            SDL_WAVE_DEBUG_CHANNELCFG("7.0", 0xf7)
-            SDL_WAVE_DEBUG_CHANNELCFG("7.1", 0xff)
-            SDL_WAVE_DEBUG_CHANNELCFG("7.0 Side", 0x6c7)
-            SDL_WAVE_DEBUG_CHANNELCFG("7.1 Side", 0x6cf)
-            SDL_WAVE_DEBUG_CHANNELCFG("7.0 Surround", 0x637)
-            SDL_WAVE_DEBUG_CHANNELCFG("7.1 Surround", 0x63f)
-            SDL_WAVE_DEBUG_CHANNELCFG("9.0 Surround", 0x5637)
-            SDL_WAVE_DEBUG_CHANNELCFG("9.1 Surround", 0x563f)
-            SDL_WAVE_DEBUG_CHANNELCFG("11.0 Surround", 0x56f7)
-            SDL_WAVE_DEBUG_CHANNELCFG("11.1 Surround", 0x56ff)
+            SDL_WAVE_DEBUG_CHANNELCFG("1.0 Mono",         0x4)
+            SDL_WAVE_DEBUG_CHANNELCFG("1.1 Mono",         0xc)
+            SDL_WAVE_DEBUG_CHANNELCFG("2.0 Stereo",       0x3)
+            SDL_WAVE_DEBUG_CHANNELCFG("2.1 Stereo",       0xb)
+            SDL_WAVE_DEBUG_CHANNELCFG("3.0 Stereo",       0x7)
+            SDL_WAVE_DEBUG_CHANNELCFG("3.1 Stereo",       0xf)
+            SDL_WAVE_DEBUG_CHANNELCFG("3.0 Surround",     0x103)
+            SDL_WAVE_DEBUG_CHANNELCFG("3.1 Surround",     0x10b)
+            SDL_WAVE_DEBUG_CHANNELCFG("4.0 Quad",         0x33)
+            SDL_WAVE_DEBUG_CHANNELCFG("4.1 Quad",         0x3b)
+            SDL_WAVE_DEBUG_CHANNELCFG("4.0 Surround",     0x107)
+            SDL_WAVE_DEBUG_CHANNELCFG("4.1 Surround",     0x10f)
+            SDL_WAVE_DEBUG_CHANNELCFG("5.0",              0x37)
+            SDL_WAVE_DEBUG_CHANNELCFG("5.1",              0x3f)
+            SDL_WAVE_DEBUG_CHANNELCFG("5.0 Side",         0x607)
+            SDL_WAVE_DEBUG_CHANNELCFG("5.1 Side",         0x60f)
+            SDL_WAVE_DEBUG_CHANNELCFG("6.0",              0x137)
+            SDL_WAVE_DEBUG_CHANNELCFG("6.1",              0x13f)
+            SDL_WAVE_DEBUG_CHANNELCFG("6.0 Side",         0x707)
+            SDL_WAVE_DEBUG_CHANNELCFG("6.1 Side",         0x70f)
+            SDL_WAVE_DEBUG_CHANNELCFG("7.0",              0xf7)
+            SDL_WAVE_DEBUG_CHANNELCFG("7.1",              0xff)
+            SDL_WAVE_DEBUG_CHANNELCFG("7.0 Side",         0x6c7)
+            SDL_WAVE_DEBUG_CHANNELCFG("7.1 Side",         0x6cf)
+            SDL_WAVE_DEBUG_CHANNELCFG("7.0 Surround",     0x637)
+            SDL_WAVE_DEBUG_CHANNELCFG("7.1 Surround",     0x63f)
+            SDL_WAVE_DEBUG_CHANNELCFG("9.0 Surround",     0x5637)
+            SDL_WAVE_DEBUG_CHANNELCFG("9.1 Surround",     0x563f)
+            SDL_WAVE_DEBUG_CHANNELCFG("11.0 Surround",    0x56f7)
+            SDL_WAVE_DEBUG_CHANNELCFG("11.1 Surround",    0x56ff)
         default:
-            SDL_WAVE_DEBUG_CHANNELSTR("FL", 0x1)
-            SDL_WAVE_DEBUG_CHANNELSTR("FR", 0x2)
-            SDL_WAVE_DEBUG_CHANNELSTR("FC", 0x4)
-            SDL_WAVE_DEBUG_CHANNELSTR("LF", 0x8)
-            SDL_WAVE_DEBUG_CHANNELSTR("BL", 0x10)
-            SDL_WAVE_DEBUG_CHANNELSTR("BR", 0x20)
+            SDL_WAVE_DEBUG_CHANNELSTR("FL",  0x1)
+            SDL_WAVE_DEBUG_CHANNELSTR("FR",  0x2)
+            SDL_WAVE_DEBUG_CHANNELSTR("FC",  0x4)
+            SDL_WAVE_DEBUG_CHANNELSTR("LF",  0x8)
+            SDL_WAVE_DEBUG_CHANNELSTR("BL",  0x10)
+            SDL_WAVE_DEBUG_CHANNELSTR("BR",  0x20)
             SDL_WAVE_DEBUG_CHANNELSTR("FLC", 0x40)
             SDL_WAVE_DEBUG_CHANNELSTR("FRC", 0x80)
-            SDL_WAVE_DEBUG_CHANNELSTR("BC", 0x100)
-            SDL_WAVE_DEBUG_CHANNELSTR("SL", 0x200)
-            SDL_WAVE_DEBUG_CHANNELSTR("SR", 0x400)
-            SDL_WAVE_DEBUG_CHANNELSTR("TC", 0x800)
+            SDL_WAVE_DEBUG_CHANNELSTR("BC",  0x100)
+            SDL_WAVE_DEBUG_CHANNELSTR("SL",  0x200)
+            SDL_WAVE_DEBUG_CHANNELSTR("SR",  0x400)
+            SDL_WAVE_DEBUG_CHANNELSTR("TC",  0x800)
             SDL_WAVE_DEBUG_CHANNELSTR("TFL", 0x1000)
             SDL_WAVE_DEBUG_CHANNELSTR("TFC", 0x2000)
             SDL_WAVE_DEBUG_CHANNELSTR("TFR", 0x4000)
@@ -230,32 +226,33 @@ static void WaveDebugLogFormat(WaveFile *file)
 #endif
 
 #ifdef SDL_WAVE_DEBUG_DUMP_FORMAT
-static void WaveDebugDumpFormat(WaveFile *file, Uint32 rifflen, Uint32 fmtlen, Uint32 datalen)
+static void
+WaveDebugDumpFormat(WaveFile *file, Uint32 rifflen, Uint32 fmtlen, Uint32 datalen)
 {
     WaveFormat *format = &file->format;
     const char *fmtstr1 = "WAVE chunk dump:\n"
-                          "-------------------------------------------\n"
-                          "RIFF                            %11u\n"
-                          "-------------------------------------------\n"
-                          "    fmt                         %11u\n"
-                          "        wFormatTag                   0x%04x\n"
-                          "        nChannels               %11u\n"
-                          "        nSamplesPerSec          %11u\n"
-                          "        nAvgBytesPerSec         %11u\n"
-                          "        nBlockAlign             %11u\n";
+        "-------------------------------------------\n"
+        "RIFF                            %11u\n"
+        "-------------------------------------------\n"
+        "    fmt                         %11u\n"
+        "        wFormatTag                   0x%04x\n"
+        "        nChannels               %11u\n"
+        "        nSamplesPerSec          %11u\n"
+        "        nAvgBytesPerSec         %11u\n"
+        "        nBlockAlign             %11u\n";
     const char *fmtstr2 = "        wBitsPerSample          %11u\n";
     const char *fmtstr3 = "        cbSize                  %11u\n";
     const char *fmtstr4a = "        wValidBitsPerSample     %11u\n";
     const char *fmtstr4b = "        wSamplesPerBlock        %11u\n";
     const char *fmtstr5 = "        dwChannelMask            0x%08x\n"
-                          "        SubFormat\n"
-                          "        %08x-%04x-%04x-%02x%02x%02x%02x%02x%02x%02x%02x\n";
+        "        SubFormat\n"
+        "        %08x-%04x-%04x-%02x%02x%02x%02x%02x%02x%02x%02x\n";
     const char *fmtstr6 = "-------------------------------------------\n"
-                          " fact\n"
-                          "  dwSampleLength                %11u\n";
+        " fact\n"
+        "  dwSampleLength                %11u\n";
     const char *fmtstr7 = "-------------------------------------------\n"
-                          " data                           %11u\n"
-                          "-------------------------------------------\n";
+        " data                           %11u\n"
+        "-------------------------------------------\n";
     char *dumpstr;
     size_t dumppos = 0;
     const size_t bufsize = 1024;
@@ -320,7 +317,8 @@ static void WaveDebugDumpFormat(WaveFile *file, Uint32 rifflen, Uint32 fmtlen, U
 }
 #endif
 
-static Sint64 WaveAdjustToFactValue(WaveFile *file, Sint64 sampleframes)
+static Sint64
+WaveAdjustToFactValue(WaveFile *file, Sint64 sampleframes)
 {
     if (file->fact.status == 2) {
         if (file->facthint == FactStrict && sampleframes < file->fact.samplelength) {
@@ -333,7 +331,8 @@ static Sint64 WaveAdjustToFactValue(WaveFile *file, Sint64 sampleframes)
     return sampleframes;
 }
 
-static int MS_ADPCM_CalculateSampleFrames(WaveFile *file, size_t datalength)
+static int
+MS_ADPCM_CalculateSampleFrames(WaveFile *file, size_t datalength)
 {
     WaveFormat *format = &file->format;
     const size_t blockheadersize = (size_t)file->format.channels * 7;
@@ -372,7 +371,8 @@ static int MS_ADPCM_CalculateSampleFrames(WaveFile *file, size_t datalength)
     return 0;
 }
 
-static int MS_ADPCM_Init(WaveFile *file, size_t datalength)
+static int
+MS_ADPCM_Init(WaveFile *file, size_t datalength)
 {
     WaveFormat *format = &file->format;
     WaveChunk *chunk = &file->chunk;
@@ -380,7 +380,7 @@ static int MS_ADPCM_Init(WaveFile *file, size_t datalength)
     const size_t blockdatasize = (size_t)format->blockalign - blockheadersize;
     const size_t blockframebitsize = (size_t)format->bitspersample * format->channels;
     const size_t blockdatasamples = (blockdatasize * 8) / blockframebitsize;
-    const Sint16 presetcoeffs[14] = { 256, 0, 512, -256, 0, 0, 192, 64, 240, 0, 460, -208, 392, -232 };
+    const Sint16 presetcoeffs[14] = {256, 0, 512, -256, 0, 0, 192, 64, 240, 0, 460, -208, 392, -232};
     size_t i, coeffcount;
     MS_ADPCM_CoeffData *coeffdata;
 
@@ -490,7 +490,8 @@ static int MS_ADPCM_Init(WaveFile *file, size_t datalength)
     return 0;
 }
 
-static Sint16 MS_ADPCM_ProcessNibble(MS_ADPCM_ChannelState *cstate, Sint32 sample1, Sint32 sample2, Uint8 nybble)
+static Sint16
+MS_ADPCM_ProcessNibble(MS_ADPCM_ChannelState *cstate, Sint32 sample1, Sint32 sample2, Uint8 nybble)
 {
     const Sint32 max_audioval = 32767;
     const Sint32 min_audioval = -32768;
@@ -526,7 +527,8 @@ static Sint16 MS_ADPCM_ProcessNibble(MS_ADPCM_ChannelState *cstate, Sint32 sampl
     return (Sint16)new_sample;
 }
 
-static int MS_ADPCM_DecodeBlockHeader(ADPCM_DecoderState *state)
+static int
+MS_ADPCM_DecodeBlockHeader(ADPCM_DecoderState *state)
 {
     Uint8 coeffindex;
     const Uint32 channels = state->channels;
@@ -547,20 +549,20 @@ static int MS_ADPCM_DecodeBlockHeader(ADPCM_DecoderState *state)
         cstate[c].coeff2 = ddata->coeff[coeffindex * 2 + 1];
 
         /* Initial delta value. */
-        o = (size_t)channels + c * 2;
+        o = channels + c * 2;
         cstate[c].delta = state->block.data[o] | ((Uint16)state->block.data[o + 1] << 8);
 
         /* Load the samples from the header. Interestingly, the sample later in
          * the output stream comes first.
          */
-        o = (size_t)channels * 3 + c * 2;
+        o = channels * 3 + c * 2;
         sample = state->block.data[o] | ((Sint32)state->block.data[o + 1] << 8);
         if (sample >= 0x8000) {
             sample -= 0x10000;
         }
         state->output.data[state->output.pos + channels] = (Sint16)sample;
 
-        o = (size_t)channels * 5 + c * 2;
+        o = channels * 5 + c * 2;
         sample = state->block.data[o] | ((Sint32)state->block.data[o + 1] << 8);
         if (sample >= 0x8000) {
             sample -= 0x10000;
@@ -586,7 +588,8 @@ static int MS_ADPCM_DecodeBlockHeader(ADPCM_DecoderState *state)
  * will always contain full sample frames (same sample count for each channel).
  * Incomplete sample frames are discarded.
  */
-static int MS_ADPCM_DecodeBlockData(ADPCM_DecoderState *state)
+static int
+MS_ADPCM_DecodeBlockData(ADPCM_DecoderState *state)
 {
     Uint16 nybble = 0;
     Sint16 sample1, sample2;
@@ -633,7 +636,8 @@ static int MS_ADPCM_DecodeBlockData(ADPCM_DecoderState *state)
     return 0;
 }
 
-static int MS_ADPCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
+static int
+MS_ADPCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
 {
     int result;
     size_t bytesleft, outputsize;
@@ -732,7 +736,8 @@ static int MS_ADPCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
     return 0;
 }
 
-static int IMA_ADPCM_CalculateSampleFrames(WaveFile *file, size_t datalength)
+static int
+IMA_ADPCM_CalculateSampleFrames(WaveFile *file, size_t datalength)
 {
     WaveFormat *format = &file->format;
     const size_t blockheadersize = (size_t)format->channels * 4;
@@ -785,7 +790,8 @@ static int IMA_ADPCM_CalculateSampleFrames(WaveFile *file, size_t datalength)
     return 0;
 }
 
-static int IMA_ADPCM_Init(WaveFile *file, size_t datalength)
+static int
+IMA_ADPCM_Init(WaveFile *file, size_t datalength)
 {
     WaveFormat *format = &file->format;
     WaveChunk *chunk = &file->chunk;
@@ -814,7 +820,7 @@ static int IMA_ADPCM_Init(WaveFile *file, size_t datalength)
         /* There's no specification for this, but it's basically the same
          * format because the extensible header has wSampePerBlocks too.
          */
-    } else {
+    } else  {
         /* The Standards Update says there 'should' be 2 bytes for wSamplesPerBlock. */
         if (chunk->size >= 20 && format->extsize >= 2) {
             format->samplesperblock = chunk->data[18] | ((Uint16)chunk->data[19] << 8);
@@ -850,7 +856,8 @@ static int IMA_ADPCM_Init(WaveFile *file, size_t datalength)
     return 0;
 }
 
-static Sint16 IMA_ADPCM_ProcessNibble(Sint8 *cindex, Sint16 lastsample, Uint8 nybble)
+static Sint16
+IMA_ADPCM_ProcessNibble(Sint8 *cindex, Sint16 lastsample, Uint8 nybble)
 {
     const Sint32 max_audioval = 32767;
     const Sint32 min_audioval = -32768;
@@ -894,18 +901,14 @@ static Sint16 IMA_ADPCM_ProcessNibble(Sint8 *cindex, Sint16 lastsample, Uint8 ny
      * (nybble & 0x8 ? -1 : 1) * ((nybble & 0x7) * step / 4 + step / 8)
      */
     delta = step >> 3;
-    if (nybble & 0x04) {
+    if (nybble & 0x04)
         delta += step;
-    }
-    if (nybble & 0x02) {
+    if (nybble & 0x02)
         delta += step >> 1;
-    }
-    if (nybble & 0x01) {
+    if (nybble & 0x01)
         delta += step >> 2;
-    }
-    if (nybble & 0x08) {
+    if (nybble & 0x08)
         delta = -delta;
-    }
 
     sample = lastsample + delta;
 
@@ -919,11 +922,12 @@ static Sint16 IMA_ADPCM_ProcessNibble(Sint8 *cindex, Sint16 lastsample, Uint8 ny
     return (Sint16)sample;
 }
 
-static int IMA_ADPCM_DecodeBlockHeader(ADPCM_DecoderState *state)
+static int
+IMA_ADPCM_DecodeBlockHeader(ADPCM_DecoderState *state)
 {
     Sint16 step;
     Uint32 c;
-    Uint8 *cstate = (Uint8 *)state->cstate;
+    Uint8 *cstate = (Uint8 *) state->cstate;
 
     for (c = 0; c < state->channels; c++) {
         size_t o = state->block.pos + c * 4;
@@ -941,7 +945,7 @@ static int IMA_ADPCM_DecodeBlockHeader(ADPCM_DecoderState *state)
 
         /* Reserved byte in block header, should be 0. */
         if (state->block.data[o + 3] != 0) {
-            /* Uh oh, corrupt data?  Buggy code? */;
+            /* Uh oh, corrupt data?  Buggy code? */ ;
         }
     }
 
@@ -958,12 +962,13 @@ static int IMA_ADPCM_DecodeBlockHeader(ADPCM_DecoderState *state)
  * contains full sample frames (same sample count for each channel).
  * Incomplete sample frames are discarded.
  */
-static int IMA_ADPCM_DecodeBlockData(ADPCM_DecoderState *state)
+static int
+IMA_ADPCM_DecodeBlockData(ADPCM_DecoderState *state)
 {
     size_t i;
     int retval = 0;
     const Uint32 channels = state->channels;
-    const size_t subblockframesize = (size_t)channels * 4;
+    const size_t subblockframesize = channels * 4;
     Uint64 bytesrequired;
     Uint32 c;
 
@@ -1027,7 +1032,8 @@ static int IMA_ADPCM_DecodeBlockData(ADPCM_DecoderState *state)
     return retval;
 }
 
-static int IMA_ADPCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
+static int
+IMA_ADPCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
 {
     int result;
     size_t bytesleft, outputsize;
@@ -1130,7 +1136,8 @@ static int IMA_ADPCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len
     return 0;
 }
 
-static int LAW_Init(WaveFile *file, size_t datalength)
+static int
+LAW_Init(WaveFile *file, size_t datalength)
 {
     WaveFormat *format = &file->format;
 
@@ -1158,7 +1165,8 @@ static int LAW_Init(WaveFile *file, size_t datalength)
     return 0;
 }
 
-static int LAW_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
+static int
+LAW_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
 {
 #ifdef SDL_WAVE_LAW_LUT
     const Sint16 alaw_lut[256] = {
@@ -1300,7 +1308,8 @@ static int LAW_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
     return 0;
 }
 
-static int PCM_Init(WaveFile *file, size_t datalength)
+static int
+PCM_Init(WaveFile *file, size_t datalength)
 {
     WaveFormat *format = &file->format;
 
@@ -1343,7 +1352,8 @@ static int PCM_Init(WaveFile *file, size_t datalength)
     return 0;
 }
 
-static int PCM_ConvertSint24ToSint32(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
+static int
+PCM_ConvertSint24ToSint32(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
 {
     WaveFormat *format = &file->format;
     WaveChunk *chunk = &file->chunk;
@@ -1394,7 +1404,8 @@ static int PCM_ConvertSint24ToSint32(WaveFile *file, Uint8 **audio_buf, Uint32 *
     return 0;
 }
 
-static int PCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
+static int
+PCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
 {
     WaveFormat *format = &file->format;
     WaveChunk *chunk = &file->chunk;
@@ -1436,7 +1447,8 @@ static int PCM_Decode(WaveFile *file, Uint8 **audio_buf, Uint32 *audio_len)
     return 0;
 }
 
-static WaveRiffSizeHint WaveGetRiffSizeHint()
+static WaveRiffSizeHint
+WaveGetRiffSizeHint()
 {
     const char *hint = SDL_GetHint(SDL_HINT_WAVE_RIFF_CHUNK_SIZE);
 
@@ -1455,7 +1467,8 @@ static WaveRiffSizeHint WaveGetRiffSizeHint()
     return RiffSizeNoHint;
 }
 
-static WaveTruncationHint WaveGetTruncationHint()
+static WaveTruncationHint
+WaveGetTruncationHint()
 {
     const char *hint = SDL_GetHint(SDL_HINT_WAVE_TRUNCATION);
 
@@ -1474,7 +1487,8 @@ static WaveTruncationHint WaveGetTruncationHint()
     return TruncNoHint;
 }
 
-static WaveFactChunkHint WaveGetFactChunkHint()
+static WaveFactChunkHint
+WaveGetFactChunkHint()
 {
     const char *hint = SDL_GetHint(SDL_HINT_WAVE_FACT_CHUNK);
 
@@ -1493,7 +1507,8 @@ static WaveFactChunkHint WaveGetFactChunkHint()
     return FactNoHint;
 }
 
-static void WaveFreeChunkData(WaveChunk *chunk)
+static void
+WaveFreeChunkData(WaveChunk *chunk)
 {
     if (chunk->data != NULL) {
         SDL_free(chunk->data);
@@ -1502,7 +1517,8 @@ static void WaveFreeChunkData(WaveChunk *chunk)
     chunk->size = 0;
 }
 
-static int WaveNextChunk(SDL_RWops *src, WaveChunk *chunk)
+static int
+WaveNextChunk(SDL_RWops *src, WaveChunk *chunk)
 {
     Uint32 chunkheader[2];
     Sint64 nextposition = chunk->position + chunk->length;
@@ -1520,10 +1536,10 @@ static int WaveNextChunk(SDL_RWops *src, WaveChunk *chunk)
         nextposition++;
     }
 
-    if (SDL_RWseek(src, nextposition, SDL_RW_SEEK_SET) != nextposition) {
+    if (SDL_RWseek(src, nextposition, RW_SEEK_SET) != nextposition) {
         /* Not sure how we ended up here. Just abort. */
         return -2;
-    } else if (SDL_RWread(src, chunkheader, sizeof(Uint32) * 2) != (sizeof(Uint32) * 2)) {
+    } else if (SDL_RWread(src, chunkheader, 4, 2) != 2) {
         return -1;
     }
 
@@ -1534,7 +1550,8 @@ static int WaveNextChunk(SDL_RWops *src, WaveChunk *chunk)
     return 0;
 }
 
-static int WaveReadPartialChunkData(SDL_RWops *src, WaveChunk *chunk, size_t length)
+static int
+WaveReadPartialChunkData(SDL_RWops *src, WaveChunk *chunk, size_t length)
 {
     WaveFreeChunkData(chunk);
 
@@ -1543,17 +1560,17 @@ static int WaveReadPartialChunkData(SDL_RWops *src, WaveChunk *chunk, size_t len
     }
 
     if (length > 0) {
-        chunk->data = (Uint8 *)SDL_malloc(length);
+        chunk->data = (Uint8 *) SDL_malloc(length);
         if (chunk->data == NULL) {
             return SDL_OutOfMemory();
         }
 
-        if (SDL_RWseek(src, chunk->position, SDL_RW_SEEK_SET) != chunk->position) {
+        if (SDL_RWseek(src, chunk->position, RW_SEEK_SET) != chunk->position) {
             /* Not sure how we ended up here. Just abort. */
             return -2;
         }
 
-        chunk->size = (size_t) SDL_RWread(src, chunk->data, length);
+        chunk->size = SDL_RWread(src, chunk->data, 1, length);
         if (chunk->size != length) {
             /* Expected to be handled by the caller. */
         }
@@ -1562,32 +1579,30 @@ static int WaveReadPartialChunkData(SDL_RWops *src, WaveChunk *chunk, size_t len
     return 0;
 }
 
-static int WaveReadChunkData(SDL_RWops *src, WaveChunk *chunk)
+static int
+WaveReadChunkData(SDL_RWops *src, WaveChunk *chunk)
 {
     return WaveReadPartialChunkData(src, chunk, chunk->length);
 }
 
-typedef struct WaveExtensibleGUID
-{
+typedef struct WaveExtensibleGUID {
     Uint16 encoding;
     Uint8 guid[16];
 } WaveExtensibleGUID;
 
 /* Some of the GUIDs that are used by WAVEFORMATEXTENSIBLE. */
-#define WAVE_FORMATTAG_GUID(tag)                                                     \
-    {                                                                                \
-        (tag) & 0xff, (tag) >> 8, 0, 0, 0, 0, 16, 0, 128, 0, 0, 170, 0, 56, 155, 113 \
-    }
+#define WAVE_FORMATTAG_GUID(tag) {(tag) & 0xff, (tag) >> 8, 0, 0, 0, 0, 16, 0, 128, 0, 0, 170, 0, 56, 155, 113}
 static WaveExtensibleGUID extensible_guids[] = {
-    { PCM_CODE, WAVE_FORMATTAG_GUID(PCM_CODE) },
-    { MS_ADPCM_CODE, WAVE_FORMATTAG_GUID(MS_ADPCM_CODE) },
-    { IEEE_FLOAT_CODE, WAVE_FORMATTAG_GUID(IEEE_FLOAT_CODE) },
-    { ALAW_CODE, WAVE_FORMATTAG_GUID(ALAW_CODE) },
-    { MULAW_CODE, WAVE_FORMATTAG_GUID(MULAW_CODE) },
-    { IMA_ADPCM_CODE, WAVE_FORMATTAG_GUID(IMA_ADPCM_CODE) }
+    {PCM_CODE,        WAVE_FORMATTAG_GUID(PCM_CODE)},
+    {MS_ADPCM_CODE,   WAVE_FORMATTAG_GUID(MS_ADPCM_CODE)},
+    {IEEE_FLOAT_CODE, WAVE_FORMATTAG_GUID(IEEE_FLOAT_CODE)},
+    {ALAW_CODE,       WAVE_FORMATTAG_GUID(ALAW_CODE)},
+    {MULAW_CODE,      WAVE_FORMATTAG_GUID(MULAW_CODE)},
+    {IMA_ADPCM_CODE,  WAVE_FORMATTAG_GUID(IMA_ADPCM_CODE)}
 };
 
-static Uint16 WaveGetFormatGUIDEncoding(WaveFormat *format)
+static Uint16
+WaveGetFormatGUIDEncoding(WaveFormat *format)
 {
     size_t i;
     for (i = 0; i < SDL_arraysize(extensible_guids); i++) {
@@ -1598,7 +1613,8 @@ static Uint16 WaveGetFormatGUIDEncoding(WaveFormat *format)
     return UNKNOWN_CODE;
 }
 
-static int WaveReadFormat(WaveFile *file)
+static int
+WaveReadFormat(WaveFile *file)
 {
     WaveChunk *chunk = &file->chunk;
     WaveFormat *format = &file->format;
@@ -1650,7 +1666,7 @@ static int WaveReadFormat(WaveFile *file)
         format->validsamplebits = SDL_ReadLE16(fmtsrc);
         format->samplesperblock = format->validsamplebits;
         format->channelmask = SDL_ReadLE32(fmtsrc);
-        SDL_RWread(fmtsrc, format->subformat, 16);
+        SDL_RWread(fmtsrc, format->subformat, 1, 16);
         format->encoding = WaveGetFormatGUIDEncoding(format);
     }
 
@@ -1659,7 +1675,8 @@ static int WaveReadFormat(WaveFile *file)
     return 0;
 }
 
-static int WaveCheckFormat(WaveFile *file, size_t datalength)
+static int
+WaveCheckFormat(WaveFile *file, size_t datalength)
 {
     WaveFormat *format = &file->format;
 
@@ -1766,7 +1783,8 @@ static int WaveCheckFormat(WaveFile *file, size_t datalength)
     return 0;
 }
 
-static int WaveLoad(SDL_RWops *src, WaveFile *file, SDL_AudioSpec *spec, Uint8 **audio_buf, Uint32 *audio_len)
+static int
+WaveLoad(SDL_RWops *src, WaveFile *file, SDL_AudioSpec *spec, Uint8 **audio_buf, Uint32 *audio_len)
 {
     int result;
     Uint32 chunkcount = 0;
@@ -1806,7 +1824,7 @@ static int WaveLoad(SDL_RWops *src, WaveFile *file, SDL_AudioSpec *spec, Uint8 *
     if (RIFFchunk.fourcc == RIFF) {
         Uint32 formtype;
         /* Read the form type. "WAVE" expected. */
-        if (SDL_RWread(src, &formtype, sizeof(Uint32)) != sizeof (Uint32)) {
+        if (SDL_RWread(src, &formtype, sizeof(Uint32), 1) != 1) {
             return SDL_SetError("Could not read RIFF form type");
         } else if (SDL_SwapLE32(formtype) != WAVE) {
             return SDL_SetError("RIFF form type is not WAVE (not a Waveform file)");
@@ -1894,9 +1912,9 @@ static int WaveLoad(SDL_RWops *src, WaveFile *file, SDL_AudioSpec *spec, Uint8 *
                     file->fact.status = -1;
                 } else {
                     /* Let's use src directly, it's just too convenient. */
-                    Sint64 position = SDL_RWseek(src, chunk->position, SDL_RW_SEEK_SET);
+                    Sint64 position = SDL_RWseek(src, chunk->position, RW_SEEK_SET);
                     Uint32 samplelength;
-                    if (position == chunk->position && SDL_RWread(src, &samplelength, sizeof(Uint32)) == sizeof(Uint32)) {
+                    if (position == chunk->position && SDL_RWread(src, &samplelength, sizeof(Uint32), 1) == 1) {
                         file->fact.status = 1;
                         file->fact.samplelength = SDL_SwapLE32(samplelength);
                     } else {
@@ -1939,9 +1957,9 @@ static int WaveLoad(SDL_RWops *src, WaveFile *file, SDL_AudioSpec *spec, Uint8 *
         if (chunk->fourcc != DATA && chunk->length > 0) {
             Uint8 tmp;
             Uint64 position = (Uint64)chunk->position + chunk->length - 1;
-            if (position > SDL_MAX_SINT64 || SDL_RWseek(src, (Sint64)position, SDL_RW_SEEK_SET) != (Sint64)position) {
+            if (position > SDL_MAX_SINT64 || SDL_RWseek(src, (Sint64)position, RW_SEEK_SET) != (Sint64)position) {
                 return SDL_SetError("Could not seek to WAVE chunk data");
-            } else if (SDL_RWread(src, &tmp, 1) != 1) {
+            } else if (SDL_RWread(src, &tmp, 1, 1) != 1) {
                 return SDL_SetError("RIFF size truncates chunk");
             }
         }
@@ -2031,7 +2049,7 @@ static int WaveLoad(SDL_RWops *src, WaveFile *file, SDL_AudioSpec *spec, Uint8 *
     SDL_zerop(spec);
     spec->freq = format->frequency;
     spec->channels = (Uint8)format->channels;
-    spec->samples = 4096; /* Good default buffer size */
+    spec->samples = 4096;       /* Good default buffer size */
 
     switch (format->encoding) {
     case MS_ADPCM_CODE:
@@ -2063,7 +2081,7 @@ static int WaveLoad(SDL_RWops *src, WaveFile *file, SDL_AudioSpec *spec, Uint8 *
         break;
     }
 
-    spec->silence = SDL_GetSilenceValueForFormat(spec->format);
+    spec->silence = SDL_SilenceValueForFormat(spec->format);
 
     /* Report the end position back to the cleanup code. */
     if (RIFFlengthknown) {
@@ -2117,10 +2135,21 @@ SDL_LoadWAV_RW(SDL_RWops *src, int freesrc, SDL_AudioSpec *spec, Uint8 **audio_b
     if (freesrc) {
         SDL_RWclose(src);
     } else {
-        SDL_RWseek(src, file.chunk.position, SDL_RW_SEEK_SET);
+        SDL_RWseek(src, file.chunk.position, RW_SEEK_SET);
     }
     WaveFreeChunkData(&file.chunk);
     SDL_free(file.decoderdata);
 
     return spec;
 }
+
+/* Since the WAV memory is allocated in the shared library, it must also
+   be freed here.  (Necessary under Win32, VC++)
+ */
+void
+SDL_FreeWAV(Uint8 *audio_buf)
+{
+    SDL_free(audio_buf);
+}
+
+/* vi: set ts=4 sw=4 expandtab: */

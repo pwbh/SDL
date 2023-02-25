@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifndef SDL_waylandkeyboard_h_
 #define SDL_waylandkeyboard_h_
@@ -35,7 +35,9 @@ extern int Wayland_InitKeyboard(_THIS);
 extern void Wayland_QuitKeyboard(_THIS);
 extern void Wayland_StartTextInput(_THIS);
 extern void Wayland_StopTextInput(_THIS);
-extern int Wayland_SetTextInputRect(_THIS, const SDL_Rect *rect);
+extern void Wayland_SetTextInputRect(_THIS, const SDL_Rect *rect);
 extern SDL_bool Wayland_HasScreenKeyboardSupport(_THIS);
 
 #endif /* SDL_waylandkeyboard_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

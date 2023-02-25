@@ -16,22 +16,21 @@
  ********************************************************************************/
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include "SDL.h"
 #include "testutils.h"
 
 #define MOOSEPIC_W 64
 #define MOOSEPIC_H 88
 
-#define MOOSEFRAME_SIZE   (MOOSEPIC_W * MOOSEPIC_H)
+#define MOOSEFRAME_SIZE (MOOSEPIC_W * MOOSEPIC_H)
 #define MOOSEFRAMES_COUNT 10
 
-/* *INDENT-OFF* */ /* clang-format off */
 SDL_Color MooseColors[84] = {
     {49, 49, 49, 255}, {66, 24, 0, 255}, {66, 33, 0, 255}, {66, 66, 66, 255},
     {66, 115, 49, 255}, {74, 33, 0, 255}, {74, 41, 16, 255}, {82, 33, 8, 255},
@@ -55,7 +54,6 @@ SDL_Color MooseColors[84] = {
     {214, 173, 140, 255}, {222, 181, 148, 255}, {222, 189, 132, 255}, {222, 189, 156, 255},
     {222, 222, 222, 255}, {231, 198, 165, 255}, {231, 231, 231, 255}, {239, 206, 173, 255}
 };
-/* *INDENT-ON* */ /* clang-format on */
 
 Uint8 MooseFrames[MOOSEFRAMES_COUNT][MOOSEFRAME_SIZE];
 
@@ -85,27 +83,28 @@ void UpdateTexture(SDL_Texture *texture)
     }
     src = MooseFrames[frame];
     for (row = 0; row < MOOSEPIC_H; ++row) {
-        dst = (Uint32 *)((Uint8 *)pixels + row * pitch);
+        dst = (Uint32*)((Uint8*)pixels + row * pitch);
         for (col = 0; col < MOOSEPIC_W; ++col) {
             color = &MooseColors[*src++];
-            *dst++ = (0xFF000000 | (color->r << 16) | (color->g << 8) | color->b);
+            *dst++ = (0xFF000000|(color->r<<16)|(color->g<<8)|color->b);
         }
     }
     SDL_UnlockTexture(texture);
 }
 
-void loop()
+void
+loop()
 {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
-        case SDL_EVENT_KEY_DOWN:
+        case SDL_KEYDOWN:
             if (event.key.keysym.sym == SDLK_ESCAPE) {
                 done = SDL_TRUE;
             }
             break;
-        case SDL_EVENT_QUIT:
+        case SDL_QUIT:
             done = SDL_TRUE;
             break;
         }
@@ -115,7 +114,7 @@ void loop()
     UpdateTexture(MooseTexture);
 
     SDL_RenderClear(renderer);
-    SDL_RenderTexture(renderer, MooseTexture, NULL, NULL);
+    SDL_RenderCopy(renderer, MooseTexture, NULL, NULL);
     SDL_RenderPresent(renderer);
 
 #ifdef __EMSCRIPTEN__
@@ -125,7 +124,8 @@ void loop()
 #endif
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     SDL_Window *window;
     SDL_RWops *handle;
@@ -151,28 +151,29 @@ int main(int argc, char **argv)
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't find the file moose.dat !\n");
         quit(2);
     }
-    SDL_RWread(handle, MooseFrames, MOOSEFRAME_SIZE * MOOSEFRAMES_COUNT);
+    SDL_RWread(handle, MooseFrames, MOOSEFRAME_SIZE, MOOSEFRAMES_COUNT);
     SDL_RWclose(handle);
+
 
     /* Create the window and renderer */
     window = SDL_CreateWindow("Happy Moose",
                               SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED,
-                              MOOSEPIC_W * 4, MOOSEPIC_H * 4,
+                              MOOSEPIC_W*4, MOOSEPIC_H*4,
                               SDL_WINDOW_RESIZABLE);
-    if (window == NULL) {
+    if (!window) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set create window: %s\n", SDL_GetError());
         quit(3);
     }
 
-    renderer = SDL_CreateRenderer(window, NULL, 0);
-    if (renderer == NULL) {
+    renderer = SDL_CreateRenderer(window, -1, 0);
+    if (!renderer) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set create renderer: %s\n", SDL_GetError());
         quit(4);
     }
 
     MooseTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, MOOSEPIC_W, MOOSEPIC_H);
-    if (MooseTexture == NULL) {
+    if (!MooseTexture) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set create texture: %s\n", SDL_GetError());
         quit(5);
     }
@@ -185,7 +186,7 @@ int main(int argc, char **argv)
 #else
     while (!done) {
         loop();
-    }
+        }
 #endif
 
     SDL_DestroyRenderer(renderer);
@@ -193,3 +194,5 @@ int main(int argc, char **argv)
     quit(0);
     return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

@@ -25,5 +25,8 @@
 #define kIOMainPortDefault kIOMasterPortDefault
 #endif
 
-extern int MacHaptic_MaybeAddDevice(io_object_t device);
-extern int MacHaptic_MaybeRemoveDevice(io_object_t device);
+extern int MacHaptic_MaybeAddDevice( io_object_t device );
+extern int MacHaptic_MaybeRemoveDevice( io_object_t device );
+
+/* vi: set ts=4 sw=4 expandtab: */
+

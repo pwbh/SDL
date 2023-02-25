@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifndef SDL_androidwindow_h_
 #define SDL_androidwindow_h_
@@ -33,18 +33,20 @@ extern void Android_MinimizeWindow(_THIS, SDL_Window *window);
 extern void Android_SetWindowResizable(_THIS, SDL_Window *window, SDL_bool resizable);
 
 extern void Android_DestroyWindow(_THIS, SDL_Window *window);
-extern int Android_GetWindowWMInfo(_THIS, SDL_Window *window, struct SDL_SysWMinfo *info);
+extern SDL_bool Android_GetWindowWMInfo(_THIS, SDL_Window *window, struct SDL_SysWMinfo *info);
 extern SDL_Window *Android_Window;
 
-struct SDL_WindowData
+typedef struct
 {
 #if SDL_VIDEO_OPENGL_EGL
     EGLSurface egl_surface;
     EGLContext egl_context; /* We use this to preserve the context when losing focus */
 #endif
-    SDL_bool backup_done;
+    SDL_bool   backup_done;
     ANativeWindow *native_window;
-
-};
+    
+} SDL_WindowData;
 
 #endif /* SDL_androidwindow_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

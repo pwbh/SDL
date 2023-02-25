@@ -18,30 +18,37 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if defined(SDL_LOADSO_DUMMY) || defined(SDL_LOADSO_DISABLED)
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* System dependent library loading routines                           */
 
-void *SDL_LoadObject(const char *sofile)
+#include "SDL_loadso.h"
+
+void *
+SDL_LoadObject(const char *sofile)
 {
     const char *loaderror = "SDL_LoadObject() not implemented";
     SDL_SetError("Failed loading %s: %s", sofile, loaderror);
-    return NULL;
+    return (NULL);
 }
 
-SDL_FunctionPointer SDL_LoadFunction(void *handle, const char *name)
+void *
+SDL_LoadFunction(void *handle, const char *name)
 {
     const char *loaderror = "SDL_LoadFunction() not implemented";
     SDL_SetError("Failed loading %s: %s", name, loaderror);
-    return NULL;
+    return (NULL);
 }
 
-void SDL_UnloadObject(void *handle)
+void
+SDL_UnloadObject(void *handle)
 {
     /* no-op. */
 }
 
 #endif /* SDL_LOADSO_DUMMY || SDL_LOADSO_DISABLED */
+
+/* vi: set ts=4 sw=4 expandtab: */

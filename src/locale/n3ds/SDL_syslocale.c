@@ -20,7 +20,7 @@
 */
 
 #include "../SDL_syslocale.h"
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #include <3ds.h>
 
@@ -29,7 +29,8 @@
 
 SDL_FORCE_INLINE u8 GetLocaleIndex(void);
 
-int SDL_SYS_GetPreferredLocales(char *buf, size_t buflen)
+void
+SDL_SYS_GetPreferredLocales(char *buf, size_t buflen)
 {
     /* The 3DS only supports these 12 languages, only one can be active at a time */
     static const char AVAILABLE_LOCALES[][6] = { "ja_JP", "en_US", "fr_FR", "de_DE",
@@ -39,7 +40,6 @@ int SDL_SYS_GetPreferredLocales(char *buf, size_t buflen)
     if (current_locale != BAD_LOCALE) {
         SDL_strlcpy(buf, AVAILABLE_LOCALES[current_locale], buflen);
     }
-    return 0;
 }
 
 SDL_FORCE_INLINE u8
@@ -55,3 +55,5 @@ GetLocaleIndex(void)
     cfguExit();
     return current_locale;
 }
+
+/* vi: set sts=4 ts=4 sw=4 expandtab: */

@@ -18,10 +18,12 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifndef SDL_x11video_h_
 #define SDL_x11video_h_
+
+#include "SDL_keycode.h"
 
 #include "../SDL_sysvideo.h"
 
@@ -64,14 +66,14 @@
 
 /* Private display data */
 
-struct SDL_VideoData
+typedef struct SDL_VideoData
 {
     Display *display;
     Display *request_display;
     char *classname;
     pid_t pid;
     XIM im;
-    Uint64 screensaver_activity;
+    Uint32 screensaver_activity;
     int numwindows;
     SDL_WindowData **windowlist;
     int windowlistlength;
@@ -124,9 +126,9 @@ struct SDL_VideoData
     SDL_Scancode key_layout[256];
     SDL_bool selection_waiting;
 
-    SDL_bool broken_pointer_grab; /* true if XGrabPointer seems unreliable. */
+    SDL_bool broken_pointer_grab;  /* true if XGrabPointer seems unreliable. */
 
-    Uint64 last_mode_change_deadline;
+    Uint32 last_mode_change_deadline;
 
     SDL_bool global_mouse_changed;
     SDL_Point global_mouse_position;
@@ -142,7 +144,7 @@ struct SDL_VideoData
     int xkb_event;
 
     KeyCode filter_code;
-    Time filter_time;
+    Time    filter_time;
 
 #if SDL_VIDEO_VULKAN
     /* Vulkan variables only valid if _this->vulkan_config.loader_handle is not NULL */
@@ -154,8 +156,10 @@ struct SDL_VideoData
     SDL_bool is_steam_deck;
     SDL_bool steam_keyboard_open;
 
-};
+} SDL_VideoData;
 
 extern SDL_bool X11_UseDirectColorVisuals(void);
 
 #endif /* SDL_x11video_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

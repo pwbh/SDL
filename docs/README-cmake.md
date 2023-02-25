@@ -2,6 +2,13 @@
 
 (www.cmake.org)
 
+SDL's build system was traditionally based on autotools. Over time, this
+approach has suffered from several issues across the different supported 
+platforms.
+To solve these problems, a new build system based on CMake was introduced.
+It is developed in parallel to the legacy autotools build system, so users 
+can experiment with it without complication.
+
 The CMake build system is supported on the following platforms:
 
 * FreeBSD
@@ -12,26 +19,25 @@ The CMake build system is supported on the following platforms:
 * Android
 * Emscripten
 * RiscOS
-* Playstation 2
 * Playstation Vita
-* Nintendo 3DS
 
 ## Building SDL
 
-Assuming the source for SDL is located at `~/sdl`. 
+Assuming the source for SDL is located at `~/sdl`
 ```sh
-cmake -S ~/sdl -B ~/build
-cmake --build ~/build
+cd ~
+mkdir build
+cd build
+cmake ~/sdl
+cmake --build .
 ```
 
-This will build SDL in the `~/build` directory.
+This will build the static and dynamic versions of SDL in the `~/build` directory.
 Installation can be done using:
 
 ```sh
-cmake --install ~/build --prefix /usr/local        # '--install' requires CMake 3.15, or newer
+cmake --install .        # '--install' requires CMake 3.15, or newer
 ```
-
-This will install SDL to /usr/local.
 
 ## Including SDL in your project
 
@@ -51,15 +57,24 @@ option(MYGAME_VENDORED "Use vendored libraries" OFF)
 if(MYGAME_VENDORED)
     add_subdirectory(vendored/sdl EXCLUDE_FROM_ALL)
 else()
-    # 1. Look for a SDL3 package, 2. look for the SDL3 component and 3. fail if none can be found
-    find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3)
+    # 1. Look for a SDL2 package, 2. look for the SDL2 component and 3. fail if none can be found
+    find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+    
+    # 1. Look for a SDL2 package, 2. Look for the SDL2maincomponent and 3. DO NOT fail when SDL2main is not available 
+    find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
 endif()
 
 # Create your game executable target as usual 
 add_executable(mygame WIN32 mygame.c)
 
-# Link to the actual SDL3 library. SDL3::SDL3 is the shared SDL library, SDL3::SDL3-static is the static SDL libarary.
-target_link_libraries(mygame PRIVATE SDL3::SDL3)
+# SDL2::SDL2main may or may not be available. It is e.g. required by Windows GUI applications  
+if(TARGET SDL2::SDL2main)
+    # It has an implicit dependency on SDL2 functions, so it MUST be added before SDL2::SDL2 (or SDL2::SDL2-static)
+    target_link_libraries(mygame PRIVATE SDL2::SDL2main)
+endif()
+
+# Link to the actual SDL2 library. SDL2::SDL2 is the shared SDL library, SDL2::SDL2-static is the static SDL libarary.
+target_link_libraries(mygame PRIVATE SDL2::SDL2)
 ```
 
 ### A system SDL library
@@ -68,14 +83,12 @@ For CMake to find SDL, it must be installed in [a default location CMake is look
 
 The following components are available, to be used as an argument of `find_package`.
 
-| Component name | Description                                                                                                                                               |
-|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SDL3-shared    | The SDL3 shared library, available through the `SDL3::SDL3-shared` target                                                                                 |
-| SDL3-static    | The SDL3 static library, available through the `SDL3::SDL3-static` target                                                                                 |
-| SDL3_test      | The SDL3_test static library, available through the `SDL3::SDL3_test` target                                                                              |
-| SDL3           | The SDL3 library, available through the `SDL3::SDL3` target. This is an alias of `SDL3::SDL3` or `SDL3::SDL3-static`. This component is always available. |
-| Headers        | The SDL3 headers, available through the `SDL3::Headers` target. This component is always available.                                                       |
-
+| Component name | Description                                                                                |
+|----------------|--------------------------------------------------------------------------------------------|
+| SDL2           | The SDL2 shared library, available through the `SDL2::SDL2` target [^SDL_TARGET_EXCEPTION] |
+| SDL2-static    | The SDL2 static library, available through the `SDL2::SDL2-static` target                  |
+| SDL2main       | The SDL2main static library, available through the `SDL2::SDL2main` target                 |
+| SDL2test       | The SDL2test static library, available through the `SDL2::SDL2test` target                 |
 
 ### Using a vendored SDL
 
@@ -92,7 +105,7 @@ When using a recent version of CMake (3.14+), it should be possible to:
 
 - build SDL for iOS, both static and dynamic
 - build SDL test apps (as iOS/tvOS .app bundles)
-- generate a working SDL_build_config.h for iOS (using SDL_build_config.h.cmake as a basis)
+- generate a working SDL_config.h for iOS (using SDL_config.h.cmake as a basis)
 
 To use, set the following CMake variables when running CMake's configuration stage:
 
@@ -146,3 +159,5 @@ To use, set the following CMake variables when running CMake's configuration sta
     cmake ~/sdl -DCMAKE_SYSTEM_NAME=tvOS -DCMAKE_OSX_SYSROOT=appletvos -DCMAKE_OSX_ARCHITECTURES=arm64`
     ```
 
+
+[^SDL_TARGET_EXCEPTION]: `SDL2::SDL2` can be an ALIAS to a static `SDL2::SDL2-static` target for multiple reasons.

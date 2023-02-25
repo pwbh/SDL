@@ -1,11 +1,13 @@
 // Copyright 2016 Adrien Descamps
 // Distributed under BSD 3-Clause License
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_HAVE_YUV
 
 #include "yuv_rgb.h"
 
+#include "SDL_cpuinfo.h"
+/*#include <x86intrin.h>*/
 
 #define PRECISION 6
 #define PRECISION_FACTOR (1<<PRECISION)

@@ -21,12 +21,12 @@
 
 #include <emscripten.h>
 
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 #include "../SDL_syslocale.h"
 
-int SDL_SYS_GetPreferredLocales(char *buf, size_t buflen)
+void
+SDL_SYS_GetPreferredLocales(char *buf, size_t buflen)
 {
-    /* *INDENT-OFF* */ /* clang-format off */
     EM_ASM({
         var buf = $0;
         var buflen = $1;
@@ -66,6 +66,7 @@ int SDL_SYS_GetPreferredLocales(char *buf, size_t buflen)
             setValue(buf + i, str.charCodeAt(i), "i8");  /* fill in C array. */
         }
     }, buf, buflen);
-    /* *INDENT-ON* */ /* clang-format on */
-    return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */
+

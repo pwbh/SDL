@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_FILESYSTEM_VITA
 
@@ -33,6 +33,11 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <fcntl.h>
+
+#include "SDL_error.h"
+#include "SDL_stdinc.h"
+#include "SDL_filesystem.h"
+#include "SDL_rwops.h"
 
 char *
 SDL_GetBasePath(void)
@@ -50,19 +55,19 @@ SDL_GetPrefPath(const char *org, const char *app)
     char *ptr = NULL;
     size_t len = 0;
 
-    if (app == NULL) {
+    if (!app) {
         SDL_InvalidParamError("app");
         return NULL;
     }
-    if (org == NULL) {
+    if (!org) {
         org = "";
     }
 
     len = SDL_strlen(envr);
 
     len += SDL_strlen(org) + SDL_strlen(app) + 3;
-    retval = (char *)SDL_malloc(len);
-    if (retval == NULL) {
+    retval = (char *) SDL_malloc(len);
+    if (!retval) {
         SDL_OutOfMemory();
         return NULL;
     }
@@ -73,7 +78,7 @@ SDL_GetPrefPath(const char *org, const char *app)
         SDL_snprintf(retval, len, "%s%s/", envr, app);
     }
 
-    for (ptr = retval + 1; *ptr; ptr++) {
+    for (ptr = retval+1; *ptr; ptr++) {
         if (*ptr == '/') {
             *ptr = '\0';
             sceIoMkdir(retval, 0777);
@@ -86,3 +91,5 @@ SDL_GetPrefPath(const char *org, const char *app)
 }
 
 #endif /* SDL_FILESYSTEM_VITA */
+
+/* vi: set ts=4 sw=4 expandtab: */

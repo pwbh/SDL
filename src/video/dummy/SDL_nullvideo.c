@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_DUMMY
 
@@ -37,6 +37,8 @@
  *  SDL video driver.  Renamed to "DUMMY" by Sam Lantinga.
  */
 
+#include "SDL_video.h"
+#include "SDL_mouse.h"
 #include "../SDL_sysvideo.h"
 #include "../SDL_pixels_c.h"
 #include "../../events/SDL_events_c.h"
@@ -44,13 +46,14 @@
 #include "SDL_nullvideo.h"
 #include "SDL_nullevents_c.h"
 #include "SDL_nullframebuffer_c.h"
+#include "SDL_hints.h"
 
-#define DUMMYVID_DRIVER_NAME       "dummy"
+#define DUMMYVID_DRIVER_NAME "dummy"
 #define DUMMYVID_DRIVER_EVDEV_NAME "evdev"
 
 /* Initialization/Query functions */
 static int DUMMY_VideoInit(_THIS);
-static int DUMMY_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode);
+static int DUMMY_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
 static void DUMMY_VideoQuit(_THIS);
 
 #if SDL_INPUT_LINUXEV
@@ -60,41 +63,44 @@ static void DUMMY_EVDEV_Poll(_THIS);
 
 /* DUMMY driver bootstrap functions */
 
-static int DUMMY_Available(void)
+static int
+DUMMY_Available(void)
 {
-    const char *envr = SDL_GetHint(SDL_HINT_VIDEO_DRIVER);
+    const char *envr = SDL_GetHint(SDL_HINT_VIDEODRIVER);
     if (envr) {
         if (SDL_strcmp(envr, DUMMYVID_DRIVER_NAME) == 0) {
             return 1;
         }
-#if SDL_INPUT_LINUXEV
+        #if SDL_INPUT_LINUXEV
         if (SDL_strcmp(envr, DUMMYVID_DRIVER_EVDEV_NAME) == 0) {
             evdev = 1;
             return 1;
         }
-#endif
+        #endif
     }
     return 0;
 }
 
-static void DUMMY_DeleteDevice(SDL_VideoDevice *device)
+static void
+DUMMY_DeleteDevice(SDL_VideoDevice * device)
 {
     SDL_free(device);
 }
 
-static SDL_VideoDevice *DUMMY_CreateDevice(void)
+static SDL_VideoDevice *
+DUMMY_CreateDevice(void)
 {
     SDL_VideoDevice *device;
 
     if (!DUMMY_Available()) {
-        return 0;
+        return (0);
     }
 
     /* Initialize all variables that we clean on shutdown */
-    device = (SDL_VideoDevice *)SDL_calloc(1, sizeof(SDL_VideoDevice));
-    if (device == NULL) {
+    device = (SDL_VideoDevice *) SDL_calloc(1, sizeof(SDL_VideoDevice));
+    if (!device) {
         SDL_OutOfMemory();
-        return 0;
+        return (0);
     }
     device->is_dummy = SDL_TRUE;
 
@@ -103,11 +109,11 @@ static SDL_VideoDevice *DUMMY_CreateDevice(void)
     device->VideoQuit = DUMMY_VideoQuit;
     device->SetDisplayMode = DUMMY_SetDisplayMode;
     device->PumpEvents = DUMMY_PumpEvents;
-#if SDL_INPUT_LINUXEV
+    #if SDL_INPUT_LINUXEV
     if (evdev) {
         device->PumpEvents = DUMMY_EVDEV_Poll;
     }
-#endif
+    #endif
     device->CreateWindowFramebuffer = SDL_DUMMY_CreateWindowFramebuffer;
     device->UpdateWindowFramebuffer = SDL_DUMMY_UpdateWindowFramebuffer;
     device->DestroyWindowFramebuffer = SDL_DUMMY_DestroyWindowFramebuffer;
@@ -130,44 +136,53 @@ VideoBootStrap DUMMY_evdev_bootstrap = {
 void SDL_EVDEV_Init(void);
 void SDL_EVDEV_Poll();
 void SDL_EVDEV_Quit(void);
-static void DUMMY_EVDEV_Poll(_THIS)
-{
-    (void)_this;
+static void DUMMY_EVDEV_Poll(_THIS) {
+    (void) _this;
     SDL_EVDEV_Poll();
 }
 #endif
 
-int DUMMY_VideoInit(_THIS)
+int
+DUMMY_VideoInit(_THIS)
 {
     SDL_DisplayMode mode;
 
     /* Use a fake 32-bpp desktop mode */
     SDL_zero(mode);
     mode.format = SDL_PIXELFORMAT_RGB888;
-    mode.pixel_w = 1024;
-    mode.pixel_h = 768;
-    if (SDL_AddBasicVideoDisplay(&mode) == 0) {
+    mode.w = 1024;
+    mode.h = 768;
+    mode.refresh_rate = 0;
+    mode.driverdata = NULL;
+    if (SDL_AddBasicVideoDisplay(&mode) < 0) {
         return -1;
     }
 
-#if SDL_INPUT_LINUXEV
+    SDL_AddDisplayMode(&_this->displays[0], &mode);
+
+    #if SDL_INPUT_LINUXEV
     SDL_EVDEV_Init();
-#endif
+    #endif
 
     /* We're done! */
     return 0;
 }
 
-static int DUMMY_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
+static int
+DUMMY_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode)
 {
     return 0;
 }
 
-void DUMMY_VideoQuit(_THIS)
+
+void
+DUMMY_VideoQuit(_THIS)
 {
-#if SDL_INPUT_LINUXEV
+    #if SDL_INPUT_LINUXEV
     SDL_EVDEV_Quit();
-#endif
+    #endif
 }
 
 #endif /* SDL_VIDEO_DRIVER_DUMMY */
+
+/* vi: set ts=4 sw=4 expandtab: */

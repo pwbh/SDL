@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifndef SDL_ps2audio_h_
 #define SDL_ps2audio_h_
@@ -26,20 +26,21 @@
 #include "../SDL_sysaudio.h"
 
 /* Hidden "this" pointer for the audio functions */
-#define _THIS SDL_AudioDevice *this
+#define _THIS   SDL_AudioDevice *this
 
 #define NUM_BUFFERS 2
 
 struct SDL_PrivateAudioData
 {
-    /* The hardware output channel. */
-    int channel;
-    /* The raw allocated mixing buffer. */
-    Uint8 *rawbuf;
-    /* Individual mixing buffers. */
-    Uint8 *mixbufs[NUM_BUFFERS];
-    /* Index of the next available mixing buffer. */
-    int next_buffer;
+   /* The hardware output channel. */
+   int     channel;
+   /* The raw allocated mixing buffer. */
+   Uint8   *rawbuf;
+   /* Individual mixing buffers. */
+   Uint8   *mixbufs[NUM_BUFFERS];
+   /* Index of the next available mixing buffer. */
+   int     next_buffer;
 };
 
 #endif /* SDL_ps2audio_h_ */
+/* vi: set ts=4 sw=4 expandtab: */

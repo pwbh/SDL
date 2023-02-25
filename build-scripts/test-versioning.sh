@@ -4,11 +4,9 @@
 
 set -eu
 
-cd `dirname $0`/..
-
-ref_major=$(sed -ne 's/^#define SDL_MAJOR_VERSION  *//p' include/SDL3/SDL_version.h)
-ref_minor=$(sed -ne 's/^#define SDL_MINOR_VERSION  *//p' include/SDL3/SDL_version.h)
-ref_micro=$(sed -ne 's/^#define SDL_PATCHLEVEL  *//p' include/SDL3/SDL_version.h)
+ref_major=$(sed -ne 's/^#define SDL_MAJOR_VERSION  *//p' include/SDL_version.h)
+ref_minor=$(sed -ne 's/^#define SDL_MINOR_VERSION  *//p' include/SDL_version.h)
+ref_micro=$(sed -ne 's/^#define SDL_PATCHLEVEL  *//p' include/SDL_version.h)
 ref_version="${ref_major}.${ref_minor}.${ref_micro}"
 
 tests=0
@@ -25,7 +23,32 @@ not_ok () {
     failed=1
 }
 
-version=$(sed -Ene 's/^project\(SDL[0-9]+ LANGUAGES C CXX VERSION "([0-9.]*)"\)$/\1/p' CMakeLists.txt)
+major=$(sed -ne 's/^SDL_MAJOR_VERSION=//p' configure.ac)
+minor=$(sed -ne 's/^SDL_MINOR_VERSION=//p' configure.ac)
+micro=$(sed -ne 's/^SDL_MICRO_VERSION=//p' configure.ac)
+version="${major}.${minor}.${micro}"
+
+if [ "$ref_version" = "$version" ]; then
+    ok "configure.ac $version"
+else
+    not_ok "configure.ac $version disagrees with SDL_version.h $ref_version"
+fi
+
+major=$(sed -ne 's/^SDL_MAJOR_VERSION=//p' configure)
+minor=$(sed -ne 's/^SDL_MINOR_VERSION=//p' configure)
+micro=$(sed -ne 's/^SDL_MICRO_VERSION=//p' configure)
+version="${major}.${minor}.${micro}"
+
+if [ "$ref_version" = "$version" ]; then
+    ok "configure $version"
+else
+    not_ok "configure $version disagrees with SDL_version.h $ref_version"
+fi
+
+major=$(sed -ne 's/^set(SDL_MAJOR_VERSION \([0-9]*\))$/\1/p' CMakeLists.txt)
+minor=$(sed -ne 's/^set(SDL_MINOR_VERSION \([0-9]*\))$/\1/p' CMakeLists.txt)
+micro=$(sed -ne 's/^set(SDL_MICRO_VERSION \([0-9]*\))$/\1/p' CMakeLists.txt)
+version="${major}.${minor}.${micro}"
 
 if [ "$ref_version" = "$version" ]; then
     ok "CMakeLists.txt $version"
@@ -44,7 +67,29 @@ else
     not_ok "android-project/app/src/main/java/org/libsdl/app/SDLActivity.java $version disagrees with SDL_version.h $ref_version"
 fi
 
-tuple=$(sed -ne 's/^ *FILEVERSION *//p' src/core/windows/version.rc | tr -d '\r')
+major=$(sed -ne 's/^MAJOR_VERSION *= *//p' Makefile.os2)
+minor=$(sed -ne 's/^MINOR_VERSION *= *//p' Makefile.os2)
+micro=$(sed -ne 's/^MICRO_VERSION *= *//p' Makefile.os2)
+version="${major}.${minor}.${micro}"
+
+if [ "$ref_version" = "$version" ]; then
+    ok "Makefile.os2 $version"
+else
+    not_ok "Makefile.os2 $version disagrees with SDL_version.h $ref_version"
+fi
+
+major=$(sed -ne 's/^MAJOR_VERSION *= *//p' Makefile.w32)
+minor=$(sed -ne 's/^MINOR_VERSION *= *//p' Makefile.w32)
+micro=$(sed -ne 's/^MICRO_VERSION *= *//p' Makefile.w32)
+version="${major}.${minor}.${micro}"
+
+if [ "$ref_version" = "$version" ]; then
+    ok "Makefile.w32 $version"
+else
+    not_ok "Makefile.w32 $version disagrees with SDL_version.h $ref_version"
+fi
+
+tuple=$(sed -ne 's/^ *FILEVERSION *//p' src/main/windows/version.rc | tr -d '\r')
 ref_tuple="${ref_major},${ref_minor},${ref_micro},0"
 
 if [ "$ref_tuple" = "$tuple" ]; then
@@ -53,7 +98,7 @@ else
     not_ok "version.rc FILEVERSION $tuple disagrees with SDL_version.h $ref_tuple"
 fi
 
-tuple=$(sed -ne 's/^ *PRODUCTVERSION *//p' src/core/windows/version.rc | tr -d '\r')
+tuple=$(sed -ne 's/^ *PRODUCTVERSION *//p' src/main/windows/version.rc | tr -d '\r')
 
 if [ "$ref_tuple" = "$tuple" ]; then
     ok "version.rc PRODUCTVERSION $tuple"
@@ -61,7 +106,7 @@ else
     not_ok "version.rc PRODUCTVERSION $tuple disagrees with SDL_version.h $ref_tuple"
 fi
 
-tuple=$(sed -Ene 's/^ *VALUE "FileVersion", "([0-9, ]*)\\0"\r?$/\1/p' src/core/windows/version.rc | tr -d '\r')
+tuple=$(sed -Ene 's/^ *VALUE "FileVersion", "([0-9, ]*)\\0"\r?$/\1/p' src/main/windows/version.rc | tr -d '\r')
 ref_tuple="${ref_major}, ${ref_minor}, ${ref_micro}, 0"
 
 if [ "$ref_tuple" = "$tuple" ]; then
@@ -70,7 +115,7 @@ else
     not_ok "version.rc FileVersion $tuple disagrees with SDL_version.h $ref_tuple"
 fi
 
-tuple=$(sed -Ene 's/^ *VALUE "ProductVersion", "([0-9, ]*)\\0"\r?$/\1/p' src/core/windows/version.rc | tr -d '\r')
+tuple=$(sed -Ene 's/^ *VALUE "ProductVersion", "([0-9, ]*)\\0"\r?$/\1/p' src/main/windows/version.rc | tr -d '\r')
 
 if [ "$ref_tuple" = "$tuple" ]; then
     ok "version.rc ProductVersion $tuple"
@@ -94,25 +139,6 @@ else
     not_ok "Info-Framework.plist CFBundleVersion $version disagrees with SDL_version.h $ref_version"
 fi
 
-version=$(sed -Ene 's/Title SDL (.*)/\1/p' Xcode/SDL/pkg-support/SDL.info)
-
-if [ "$ref_version" = "$version" ]; then
-    ok "SDL.info Title $version"
-else
-    not_ok "SDL.info Title $version disagrees with SDL_version.h $ref_version"
-fi
-
-marketing=$(sed -Ene 's/.*MARKETING_VERSION = (.*);/\1/p' Xcode/SDL/SDL.xcodeproj/project.pbxproj)
-
-ref="$ref_version
-$ref_version"
-
-if [ "$ref" = "$marketing" ]; then
-    ok "project.pbxproj MARKETING_VERSION is consistent"
-else
-    not_ok "project.pbxproj MARKETING_VERSION is inconsistent, expected $ref, got $marketing"
-fi
-
 # For simplicity this assumes we'll never break ABI before SDL 3.
 dylib_compat=$(sed -Ene 's/.*DYLIB_COMPATIBILITY_VERSION = (.*);$/\1/p' Xcode/SDL/SDL.xcodeproj/project.pbxproj)
 
@@ -128,6 +154,8 @@ case "$ref_minor" in
 esac
 
 ref="${major}.${minor}.0
+${major}.${minor}.0
+${major}.${minor}.0
 ${major}.${minor}.0"
 
 if [ "$ref" = "$dylib_compat" ]; then
@@ -150,6 +178,8 @@ case "$ref_minor" in
 esac
 
 ref="${major}.${minor}.0
+${major}.${minor}.0
+${major}.${minor}.0
 ${major}.${minor}.0"
 
 if [ "$ref" = "$dylib_cur" ]; then

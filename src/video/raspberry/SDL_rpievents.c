@@ -19,7 +19,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_RPI
 
@@ -38,6 +38,8 @@ void RPI_PumpEvents(_THIS)
 #ifdef SDL_INPUT_LINUXEV
     SDL_EVDEV_Poll();
 #endif
+    
 }
 
 #endif /* SDL_VIDEO_DRIVER_RPI */
+

@@ -18,10 +18,11 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_UIKIT
 
+#include "SDL.h"
 #include "SDL_uikitvideo.h"
 #include "SDL_uikitwindow.h"
 
@@ -35,7 +36,8 @@ UIKit_ShowingMessageBox(void)
     return s_showingMessageBox;
 }
 
-static void UIKit_WaitUntilMessageBoxClosed(const SDL_MessageBoxData *messageboxdata, int *clickedindex)
+static void
+UIKit_WaitUntilMessageBoxClosed(const SDL_MessageBoxData *messageboxdata, int *clickedindex)
 {
     *clickedindex = messageboxdata->numbuttons;
 
@@ -50,7 +52,8 @@ static void UIKit_WaitUntilMessageBoxClosed(const SDL_MessageBoxData *messagebox
     }
 }
 
-static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messageboxdata, int *buttonid)
+static BOOL
+UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messageboxdata, int *buttonid)
 {
     int i;
     int __block clickedindex = messageboxdata->numbuttons;
@@ -82,10 +85,10 @@ static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messag
         }
 
         action = [UIAlertAction actionWithTitle:@(sdlButton->text)
-                                          style:style
-                                        handler:^(UIAlertAction *alertAction) {
-                                          clickedindex = (int)(sdlButton - messageboxdata->buttons);
-                                        }];
+                                style:style
+                                handler:^(UIAlertAction *alertAction) {
+                                    clickedindex = (int)(sdlButton - messageboxdata->buttons);
+                                }];
         [alert addAction:action];
 
         if (sdlButton->flags & SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT) {
@@ -94,7 +97,7 @@ static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messag
     }
 
     if (messageboxdata->window) {
-        SDL_UIKitWindowData *data = (__bridge SDL_UIKitWindowData *)messageboxdata->window->driverdata;
+        SDL_WindowData *data = (__bridge SDL_WindowData *) messageboxdata->window->driverdata;
         window = data.uiwindow;
     }
 
@@ -121,31 +124,31 @@ static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messag
     return YES;
 }
 
-static void UIKit_ShowMessageBoxImpl(const SDL_MessageBoxData *messageboxdata, int *buttonid, int *returnValue)
+static void
+UIKit_ShowMessageBoxImpl(const SDL_MessageBoxData *messageboxdata, int *buttonid, int *returnValue)
+{ @autoreleasepool
 {
-    @autoreleasepool {
-        if (UIKit_ShowMessageBoxAlertController(messageboxdata, buttonid)) {
-            *returnValue = 0;
-        } else {
-            *returnValue = SDL_SetError("Could not show message box.");
-        }
+    if (UIKit_ShowMessageBoxAlertController(messageboxdata, buttonid)) {
+        *returnValue = 0;
+    } else {
+        *returnValue = SDL_SetError("Could not show message box.");
     }
-}
+}}
 
-int UIKit_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonid)
+int
+UIKit_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonid)
+{ @autoreleasepool
 {
-    @autoreleasepool {
-        __block int returnValue = 0;
+    __block int returnValue = 0;
 
-        if ([NSThread isMainThread]) {
-            UIKit_ShowMessageBoxImpl(messageboxdata, buttonid, &returnValue);
-        } else {
-            dispatch_sync(dispatch_get_main_queue(), ^{
-              UIKit_ShowMessageBoxImpl(messageboxdata, buttonid, &returnValue);
-            });
-        }
-        return returnValue;
+    if ([NSThread isMainThread]) {
+        UIKit_ShowMessageBoxImpl(messageboxdata, buttonid, &returnValue);
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), ^{ UIKit_ShowMessageBoxImpl(messageboxdata, buttonid, &returnValue); });
     }
-}
+    return returnValue;
+}}
 
 #endif /* SDL_VIDEO_DRIVER_UIKIT */
+
+/* vi: set ts=4 sw=4 expandtab: */

@@ -11,10 +11,11 @@
 */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
-#include <SDL3/SDL_test.h>
+#include "SDL.h"
+#include "SDL_test.h"
 
 #include "testautomation_suites.h"
 
@@ -28,7 +29,8 @@ quit(int rc)
     exit(rc);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     int result;
     int testIterations = 1;
@@ -37,11 +39,10 @@ int main(int argc, char *argv[])
     char *filter = NULL;
     int i, done;
     SDL_Event event;
-    int list = 0;
 
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
-    if (state == NULL) {
+    if (!state) {
         return 1;
     }
 
@@ -55,53 +56,36 @@ int main(int argc, char *argv[])
             if (SDL_strcasecmp(argv[i], "--iterations") == 0) {
                 if (argv[i + 1]) {
                     testIterations = SDL_atoi(argv[i + 1]);
-                    if (testIterations < 1) {
-                        testIterations = 1;
-                    }
+                    if (testIterations < 1) testIterations = 1;
                     consumed = 2;
                 }
-            } else if (SDL_strcasecmp(argv[i], "--execKey") == 0) {
+            }
+            else if (SDL_strcasecmp(argv[i], "--execKey") == 0) {
                 if (argv[i + 1]) {
-                    (void)SDL_sscanf(argv[i + 1], "%" SDL_PRIu64, &userExecKey);
+                    SDL_sscanf(argv[i + 1], "%"SDL_PRIu64, &userExecKey);
                     consumed = 2;
                 }
-            } else if (SDL_strcasecmp(argv[i], "--seed") == 0) {
+            }
+            else if (SDL_strcasecmp(argv[i], "--seed") == 0) {
                 if (argv[i + 1]) {
                     userRunSeed = SDL_strdup(argv[i + 1]);
                     consumed = 2;
                 }
-            } else if (SDL_strcasecmp(argv[i], "--filter") == 0) {
+            }
+            else if (SDL_strcasecmp(argv[i], "--filter") == 0) {
                 if (argv[i + 1]) {
                     filter = SDL_strdup(argv[i + 1]);
                     consumed = 2;
                 }
-            } else if (SDL_strcasecmp(argv[i], "--list") == 0) {
-                consumed = 1;
-                list = 1;
             }
         }
         if (consumed < 0) {
-            static const char *options[] = { "[--iterations #]", "[--execKey #]", "[--seed string]", "[--filter suite_name|test_name]", "[--list]", NULL };
+            static const char *options[] = { "[--iterations #]", "[--execKey #]", "[--seed string]", "[--filter suite_name|test_name]", NULL };
             SDLTest_CommonLogUsage(state, argv[0], options);
             quit(1);
         }
 
         i += consumed;
-    }
-
-    /* List all suites. */
-    if (list) {
-        int suiteCounter;
-        for (suiteCounter = 0; testSuites[suiteCounter]; ++suiteCounter) {
-            int testCounter;
-            SDLTest_TestSuiteReference *testSuite = testSuites[suiteCounter];
-            SDL_Log("Test suite: %s", testSuite->name);
-            for (testCounter = 0; testSuite->testCases[testCounter]; ++testCounter) {
-                const SDLTest_TestCaseReference *testCase = testSuite->testCases[testCounter];
-                SDL_Log("      test: %s", testCase->name);
-            }
-        }
-        return 0;
     }
 
     /* Initialize common state */
@@ -121,11 +105,11 @@ int main(int argc, char *argv[])
 
     /* Empty event queue */
     done = 0;
-    for (i = 0; i < 100; i++) {
-        while (SDL_PollEvent(&event)) {
-            SDLTest_CommonEvent(state, &event, &done);
-        }
-        SDL_Delay(10);
+    for (i=0; i<100; i++)  {
+      while (SDL_PollEvent(&event)) {
+        SDLTest_CommonEvent(state, &event, &done);
+      }
+      SDL_Delay(10);
     }
 
     /* Clean up */
@@ -134,5 +118,7 @@ int main(int argc, char *argv[])
 
     /* Shutdown everything */
     quit(result);
-    return result;
+    return(result);
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

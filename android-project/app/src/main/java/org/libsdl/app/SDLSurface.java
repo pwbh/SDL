@@ -114,7 +114,6 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         mHeight = height;
         int nDeviceWidth = width;
         int nDeviceHeight = height;
-        float density = 1.0f;
         try
         {
             if (Build.VERSION.SDK_INT >= 17) {
@@ -122,8 +121,6 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                 mDisplay.getRealMetrics( realMetrics );
                 nDeviceWidth = realMetrics.widthPixels;
                 nDeviceHeight = realMetrics.heightPixels;
-                // Use densityDpi instead of density to more closely match what the UI scale is
-                density = (float)realMetrics.densityDpi / 160.0f;
             }
         } catch(Exception ignored) {
         }
@@ -135,7 +132,7 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
         Log.v("SDL", "Window size: " + width + "x" + height);
         Log.v("SDL", "Device size: " + nDeviceWidth + "x" + nDeviceHeight);
-        SDLActivity.nativeSetScreenResolution(width, height, nDeviceWidth, nDeviceHeight, density, mDisplay.getRefreshRate());
+        SDLActivity.nativeSetScreenResolution(width, height, nDeviceWidth, nDeviceHeight, mDisplay.getRefreshRate());
         SDLActivity.onNativeResize();
 
         // Prevent a screen distortion glitch,

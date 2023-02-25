@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_HAIKU
 
@@ -31,7 +31,7 @@
 #include "SDL_bopengl.h"
 #endif
 
-#include "../../core/haiku/SDL_BApp.h"
+#include "../../main/haiku/SDL_BApp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,18 +49,18 @@ struct SDL_DisplayModeData {
 #endif
 
 static SDL_INLINE SDL_BWin *_ToBeWin(SDL_Window *window) {
-    return (SDL_BWin *)(window->driverdata);
+    return ((SDL_BWin*)(window->driverdata));
 }
 
 static SDL_INLINE SDL_BApp *_GetBeApp() {
-    return (SDL_BApp *)be_app;
+    return ((SDL_BApp*)be_app);
 }
 
 static SDL_INLINE display_mode * _ExtractBMode(SDL_DisplayMode *mode) {
 #if WRAP_BMODE
-    return ((SDL_DisplayModeData *)mode->driverdata)->bmode;
+    return ((SDL_DisplayModeData*)mode->driverdata)->bmode;
 #else
-    return (display_mode *)(mode->driverdata);
+    return (display_mode*)(mode->driverdata);
 #endif
 }
 
@@ -78,26 +78,26 @@ static float get_refresh_rate(display_mode &mode) {
 void _SpoutModeData(display_mode *bmode) {
     printf("BMode:\n");
     printf("\tw,h = (%i,%i)\n", bmode->virtual_width, bmode->virtual_height);
-    printf("\th,v = (%i,%i)\n", bmode->h_display_start,
+    printf("\th,v = (%i,%i)\n", bmode->h_display_start, 
             bmode->v_display_start);
-    if (bmode->flags) {
+    if(bmode->flags) {
         printf("\tFlags:\n");
-        if (bmode->flags & B_SCROLL) {
+        if(bmode->flags & B_SCROLL) {
             printf("\t\tB_SCROLL\n");
         }
-        if (bmode->flags & B_8_BIT_DAC) {
+        if(bmode->flags & B_8_BIT_DAC) {
             printf("\t\tB_8_BIT_DAC\n");
         }
-        if (bmode->flags & B_HARDWARE_CURSOR) {
+        if(bmode->flags & B_HARDWARE_CURSOR) {
             printf("\t\tB_HARDWARE_CURSOR\n");
         }
-        if (bmode->flags & B_PARALLEL_ACCESS) {
+        if(bmode->flags & B_PARALLEL_ACCESS) {
             printf("\t\tB_PARALLEL_ACCESS\n");
         }
-        if (bmode->flags & B_DPMS) {
+        if(bmode->flags & B_DPMS) {
             printf("\t\tB_DPMS\n");
         }
-        if (bmode->flags & B_IO_FB_NA) {
+        if(bmode->flags & B_IO_FB_NA) {
             printf("\t\tB_IO_FB_NA\n");
         }
     }
@@ -109,21 +109,21 @@ void _SpoutModeData(display_mode *bmode) {
     printf("\t\tv - display: %i sync start: %i sync end: %i total: %i\n",
         bmode->timing.v_display, bmode->timing.v_sync_start,
         bmode->timing.v_sync_end, bmode->timing.v_total);
-    if (bmode->timing.flags) {
+    if(bmode->timing.flags) {
         printf("\t\tFlags:\n");
-        if (bmode->timing.flags & B_BLANK_PEDESTAL) {
+        if(bmode->timing.flags & B_BLANK_PEDESTAL) {
             printf("\t\t\tB_BLANK_PEDESTAL\n");
         }
-        if (bmode->timing.flags & B_TIMING_INTERLACED) {
+        if(bmode->timing.flags & B_TIMING_INTERLACED) {
             printf("\t\t\tB_TIMING_INTERLACED\n");
         }
-        if (bmode->timing.flags & B_POSITIVE_HSYNC) {
+        if(bmode->timing.flags & B_POSITIVE_HSYNC) {
             printf("\t\t\tB_POSITIVE_HSYNC\n");
         }
-        if (bmode->timing.flags & B_POSITIVE_VSYNC) {
+        if(bmode->timing.flags & B_POSITIVE_VSYNC) {
             printf("\t\t\tB_POSITIVE_VSYNC\n");
         }
-        if (bmode->timing.flags & B_SYNC_ON_GREEN) {
+        if(bmode->timing.flags & B_SYNC_ON_GREEN) {
             printf("\t\t\tB_SYNC_ON_GREEN\n");
         }
     }
@@ -162,23 +162,24 @@ int32 HAIKU_ColorSpaceToSDLPxFormat(uint32 colorspace)
 
     /* May never get here, but safer and needed to shut up compiler */
     SDL_SetError("Invalid color space");
-    return 0;
+    return 0;       
 }
 
-static void _BDisplayModeToSdlDisplayMode(display_mode *bmode, SDL_DisplayMode *mode) {
-    SDL_zerop(mode);
-    mode->pixel_w = bmode->virtual_width;
-    mode->pixel_h = bmode->virtual_height;
-    mode->refresh_rate = get_refresh_rate(*bmode);
+static void _BDisplayModeToSdlDisplayMode(display_mode *bmode,
+        SDL_DisplayMode *mode) {
+    mode->w = bmode->virtual_width;
+    mode->h = bmode->virtual_height;
+    mode->refresh_rate = (int)get_refresh_rate(*bmode);
 
 #if WRAP_BMODE
     SDL_DisplayModeData *data = (SDL_DisplayModeData*)SDL_calloc(1,
         sizeof(SDL_DisplayModeData));
     data->bmode = bmode;
-
+    
     mode->driverdata = data;
 
 #else
+
     mode->driverdata = bmode;
 #endif
 
@@ -188,13 +189,19 @@ static void _BDisplayModeToSdlDisplayMode(display_mode *bmode, SDL_DisplayMode *
 
 /* Later, there may be more than one monitor available */
 static void _AddDisplay(BScreen *screen) {
-    SDL_DisplayMode mode;
-    display_mode bmode;
-    screen->GetMode(&bmode);
+    SDL_VideoDisplay display;
+    SDL_DisplayMode *mode = (SDL_DisplayMode*)SDL_calloc(1,
+        sizeof(SDL_DisplayMode));
+    display_mode *bmode = (display_mode*)SDL_calloc(1, sizeof(display_mode));
+    screen->GetMode(bmode);
 
-    _BDisplayModeToSdlDisplayMode(&bmode, &mode);
-
-    SDL_AddBasicVideoDisplay(&mode);
+    _BDisplayModeToSdlDisplayMode(bmode, mode);
+    
+    SDL_zero(display);
+    display.desktop_mode = *mode;
+    display.current_mode = *mode;
+    
+    SDL_AddVideoDisplay(&display, SDL_FALSE);
 }
 
 /*
@@ -226,7 +233,7 @@ int HAIKU_GetDisplayBounds(_THIS, SDL_VideoDisplay *display, SDL_Rect *rect) {
     return 0;
 }
 
-int HAIKU_GetDisplayModes(_THIS, SDL_VideoDisplay *display) {
+void HAIKU_GetDisplayModes(_THIS, SDL_VideoDisplay *display) {
     /* Get the current screen */
     BScreen bscreen;
 
@@ -235,27 +242,26 @@ int HAIKU_GetDisplayModes(_THIS, SDL_VideoDisplay *display) {
     display_mode this_bmode;
     display_mode *bmodes;
     uint32 count, i;
-
+    
     /* Get graphics-hardware supported modes */
     bscreen.GetModeList(&bmodes, &count);
     bscreen.GetMode(&this_bmode);
-
-    for (i = 0; i < count; ++i) {
+    
+    for(i = 0; i < count; ++i) {
         // FIXME: Apparently there are errors with colorspace changes
         if (bmodes[i].space == this_bmode.space) {
             _BDisplayModeToSdlDisplayMode(&bmodes[i], &mode);
-            SDL_AddFullscreenDisplayMode(display, &mode);
+            SDL_AddDisplayMode(display, &mode);
         }
     }
     free(bmodes); /* This should not be SDL_free() */
-    return 0;
 }
 
 
-int HAIKU_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode) {
+int HAIKU_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode){
     /* Get the current screen */
     BScreen bscreen;
-    if (!bscreen.IsValid()) {
+    if(!bscreen.IsValid()) {
         printf(__FILE__": %d - ERROR: BAD SCREEN\n", __LINE__);
     }
 
@@ -267,8 +273,8 @@ int HAIKU_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode
     uint32 c = 0, i;
     display_mode *bmode_list;
     bscreen.GetModeList(&bmode_list, &c);
-    for (i = 0; i < c; ++i) {
-        if (    bmode_list[i].space == bmode->space &&
+    for(i = 0; i < c; ++i) {
+        if(    bmode_list[i].space == bmode->space &&
             bmode_list[i].virtual_width == bmode->virtual_width &&
             bmode_list[i].virtual_height == bmode->virtual_height ) {
                 bmode = &bmode_list[i];
@@ -276,12 +282,12 @@ int HAIKU_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode
         }
     }
 
-    if (bscreen.SetMode(bmode) != B_OK) {
+    if(bscreen.SetMode(bmode) != B_OK) {
         return SDL_SetError("Bad video mode");
     }
-
+    
     free(bmode_list); /* This should not be SDL_free() */
-
+    
 #if SDL_VIDEO_OPENGL
     /* FIXME: Is there some way to reboot the OpenGL context?  This doesn't
        help */
@@ -296,3 +302,5 @@ int HAIKU_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode
 #endif
 
 #endif /* SDL_VIDEO_DRIVER_HAIKU */
+
+/* vi: set ts=4 sw=4 expandtab: */

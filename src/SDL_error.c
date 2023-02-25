@@ -18,13 +18,15 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "./SDL_internal.h"
 
 /* Simple error handling in SDL */
 
+#include "SDL_error.h"
 #include "SDL_error_c.h"
 
-int SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
+int
+SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
 {
     /* Ignore call if invalid format pointer was passed */
     if (fmt != NULL) {
@@ -32,7 +34,7 @@ int SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
         int result;
         SDL_error *error = SDL_GetErrBuf();
 
-        error->error = 1; /* mark error as valid */
+        error->error = 1;  /* mark error as valid */
 
         va_start(ap, fmt);
         result = SDL_vsnprintf(error->str, error->len, fmt, ap);
@@ -45,10 +47,11 @@ int SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
                 error->str = str;
                 error->len = len;
                 va_start(ap, fmt);
-                (void)SDL_vsnprintf(error->str, error->len, fmt, ap);
+                SDL_vsnprintf(error->str, error->len, fmt, ap);
                 va_end(ap);
             }
         }
+
 
         if (SDL_LogGetPriority(SDL_LOG_CATEGORY_ERROR) <= SDL_LOG_PRIORITY_DEBUG) {
             /* If we are in debug mode, print out the error message */
@@ -67,13 +70,15 @@ SDL_GetError(void)
     return error->error ? error->str : "";
 }
 
-void SDL_ClearError(void)
+void
+SDL_ClearError(void)
 {
     SDL_GetErrBuf()->error = 0;
 }
 
 /* Very common errors go here */
-int SDL_Error(SDL_errorcode code)
+int
+SDL_Error(SDL_errorcode code)
 {
     switch (code) {
     case SDL_ENOMEM:
@@ -91,6 +96,24 @@ int SDL_Error(SDL_errorcode code)
     }
 }
 
+#ifdef TEST_ERROR
+int
+main(int argc, char *argv[])
+{
+    char buffer[BUFSIZ + 1];
+
+    SDL_SetError("Hi there!");
+    printf("Error 1: %s\n", SDL_GetError());
+    SDL_ClearError();
+    SDL_memset(buffer, '1', BUFSIZ);
+    buffer[BUFSIZ] = 0;
+    SDL_SetError("This is the error: %s (%f)", buffer, 1.0);
+    printf("Error 2: %s\n", SDL_GetError());
+    exit(0);
+}
+#endif
+
+
 char *
 SDL_GetErrorMsg(char *errstr, int maxlen)
 {
@@ -104,3 +127,5 @@ SDL_GetErrorMsg(char *errstr, int maxlen)
 
     return errstr;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

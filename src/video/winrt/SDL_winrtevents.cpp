@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_WINRT
 
@@ -36,6 +36,7 @@ using Windows::UI::Core::CoreCursor;
 #include "../../core/winrt/SDL_winrtapp_common.h"
 #include "../../core/winrt/SDL_winrtapp_direct3d.h"
 #include "../../core/winrt/SDL_winrtapp_xaml.h"
+#include "SDL_system.h"
 
 extern "C" {
 #include "../../thread/SDL_systhread.h"
@@ -43,12 +44,15 @@ extern "C" {
 #include "../../events/SDL_events_c.h"
 }
 
+
 /* Forward declarations */
 static void WINRT_YieldXAMLThread();
 
+
 /* Global event management */
 
-void WINRT_PumpEvents(_THIS)
+void
+WINRT_PumpEvents(_THIS)
 {
     if (SDL_WinRTGlobalApp) {
         SDL_WinRTGlobalApp->PumpEvents();
@@ -56,6 +60,7 @@ void WINRT_PumpEvents(_THIS)
         WINRT_YieldXAMLThread();
     }
 }
+
 
 /* XAML Thread management */
 
@@ -67,11 +72,12 @@ enum SDL_XAMLAppThreadState
 };
 
 static SDL_XAMLAppThreadState _threadState = ThreadState_NotLaunched;
-static SDL_Thread *_XAMLThread = nullptr;
-static SDL_mutex *_mutex = nullptr;
-static SDL_cond *_cond = nullptr;
+static SDL_Thread * _XAMLThread = nullptr;
+static SDL_mutex * _mutex = nullptr;
+static SDL_cond * _cond = nullptr;
 
-static void WINRT_YieldXAMLThread()
+static void
+WINRT_YieldXAMLThread()
 {
     SDL_LockMutex(_mutex);
     SDL_assert(_threadState == ThreadState_Running);
@@ -87,7 +93,8 @@ static void WINRT_YieldXAMLThread()
     SDL_UnlockMutex(_mutex);
 }
 
-static int WINRT_XAMLThreadMain(void *userdata)
+static int
+WINRT_XAMLThreadMain(void * userdata)
 {
     // TODO, WinRT: pass the C-style main() a reasonably realistic
     // representation of command line arguments.
@@ -96,48 +103,51 @@ static int WINRT_XAMLThreadMain(void *userdata)
     return WINRT_SDLAppEntryPoint(argc, argv);
 }
 
-void WINRT_CycleXAMLThread(void)
+void
+WINRT_CycleXAMLThread(void)
 {
     switch (_threadState) {
-    case ThreadState_NotLaunched:
-    {
-        _cond = SDL_CreateCond();
+        case ThreadState_NotLaunched:
+        {
+            _cond = SDL_CreateCond();
 
-        _mutex = SDL_CreateMutex();
-        _threadState = ThreadState_Running;
-        _XAMLThread = SDL_CreateThreadInternal(WINRT_XAMLThreadMain, "SDL/XAML App Thread", 0, nullptr);
+            _mutex = SDL_CreateMutex();
+            _threadState = ThreadState_Running;
+            _XAMLThread = SDL_CreateThreadInternal(WINRT_XAMLThreadMain, "SDL/XAML App Thread", 0, nullptr);
 
-        SDL_LockMutex(_mutex);
-        while (_threadState != ThreadState_Yielding) {
-            SDL_CondWait(_cond, _mutex);
+            SDL_LockMutex(_mutex);
+            while (_threadState != ThreadState_Yielding) {
+                SDL_CondWait(_cond, _mutex);
+            }
+            SDL_UnlockMutex(_mutex);
+
+            break;
         }
-        SDL_UnlockMutex(_mutex);
 
-        break;
-    }
-
-    case ThreadState_Running:
-    {
-        SDL_assert(false);
-        break;
-    }
-
-    case ThreadState_Yielding:
-    {
-        SDL_LockMutex(_mutex);
-        SDL_assert(_threadState == ThreadState_Yielding);
-        _threadState = ThreadState_Running;
-        SDL_UnlockMutex(_mutex);
-
-        SDL_CondSignal(_cond);
-
-        SDL_LockMutex(_mutex);
-        while (_threadState != ThreadState_Yielding) {
-            SDL_CondWait(_cond, _mutex);
+        case ThreadState_Running:
+        {
+            SDL_assert(false);
+            break;
         }
-        SDL_UnlockMutex(_mutex);
-    }
+
+        case ThreadState_Yielding:
+        {
+            SDL_LockMutex(_mutex);
+            SDL_assert(_threadState == ThreadState_Yielding);
+            _threadState = ThreadState_Running;
+            SDL_UnlockMutex(_mutex);
+
+            SDL_CondSignal(_cond);
+
+            SDL_LockMutex(_mutex);
+            while (_threadState != ThreadState_Yielding) {
+                SDL_CondWait(_cond, _mutex);
+            }
+            SDL_UnlockMutex(_mutex);
+        }
     }
 }
 
 #endif /* SDL_VIDEO_DRIVER_WINRT */
+
+/* vi: set ts=4 sw=4 expandtab: */

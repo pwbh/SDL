@@ -18,11 +18,13 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
+#include "SDL_thread.h"
 #include "../SDL_systhread.h"
 #include "../SDL_thread_c.h"
 
 #include <pthread.h>
+
 
 #define INVALID_PTHREAD_KEY ((pthread_key_t)-1)
 
@@ -53,7 +55,8 @@ SDL_SYS_GetTLSData(void)
     return (SDL_TLSData *)pthread_getspecific(thread_local_storage);
 }
 
-int SDL_SYS_SetTLSData(SDL_TLSData *data)
+int
+SDL_SYS_SetTLSData(SDL_TLSData *data)
 {
     if (generic_local_storage) {
         return SDL_Generic_SetTLSData(data);
@@ -63,3 +66,5 @@ int SDL_SYS_SetTLSData(SDL_TLSData *data)
     }
     return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

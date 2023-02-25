@@ -19,10 +19,10 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
-#ifndef SDL_ngagevideo_h
-#define SDL_ngagevideo_h
+#ifndef _SDL_ngagevideo_h
+#define _SDL_ngagevideo_h
 
 #include "../SDL_sysvideo.h"
 
@@ -34,33 +34,35 @@
 
 #define _THIS SDL_VideoDevice *_this
 
-struct SDL_VideoData
+typedef struct SDL_VideoData
 {
     /* Epoc window server info */
-    RWsSession NGAGE_WsSession;
-    RWindowGroup NGAGE_WsWindowGroup;
-    TInt NGAGE_WsWindowGroupID;
-    RWindow NGAGE_WsWindow;
-    CWsScreenDevice *NGAGE_WsScreen;
-    CWindowGc *NGAGE_WindowGc;
-    TRequestStatus NGAGE_WsEventStatus;
-    TRequestStatus NGAGE_RedrawEventStatus;
-    TWsEvent NGAGE_WsEvent;
-    CFbsDrawDevice *NGAGE_DrawDevice;
-    TBool NGAGE_IsWindowFocused; /* Not used yet */
+    RWsSession       NGAGE_WsSession;
+    RWindowGroup     NGAGE_WsWindowGroup;
+    TInt             NGAGE_WsWindowGroupID;
+    RWindow          NGAGE_WsWindow;
+    CWsScreenDevice* NGAGE_WsScreen;
+    CWindowGc*       NGAGE_WindowGc;
+    TRequestStatus   NGAGE_WsEventStatus;
+    TRequestStatus   NGAGE_RedrawEventStatus;
+    TWsEvent         NGAGE_WsEvent;
+    CFbsDrawDevice*  NGAGE_DrawDevice;
+    TBool            NGAGE_IsWindowFocused; /* Not used yet */
 
     /* Screen hardware frame buffer info */
-    TBool NGAGE_HasFrameBuffer;
-    TInt NGAGE_BytesPerPixel;
-    TInt NGAGE_BytesPerScanLine;
-    TInt NGAGE_BytesPerScreen;
-    TDisplayMode NGAGE_DisplayMode;
-    TSize NGAGE_ScreenSize;
-    TUint8 *NGAGE_FrameBuffer;
-    TPoint NGAGE_ScreenOffset;
+    TBool            NGAGE_HasFrameBuffer;
+    TInt             NGAGE_BytesPerPixel;
+    TInt             NGAGE_BytesPerScanLine;
+    TInt             NGAGE_BytesPerScreen;
+    TDisplayMode     NGAGE_DisplayMode;
+    TSize            NGAGE_ScreenSize;
+    TUint8*          NGAGE_FrameBuffer;
+    TPoint           NGAGE_ScreenOffset;
 
     CFbsBitGc::TGraphicsOrientation NGAGE_ScreenOrientation;
 
-};
+} SDL_VideoData;
 
-#endif /* SDL_ngagevideo_h */
+#endif /* _SDL_ngagevideo_h */
+
+/* vi: set ts=4 sw=4 expandtab: */

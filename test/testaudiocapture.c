@@ -9,11 +9,9 @@
   including commercial applications, and to alter it and redistribute it
   freely.
 */
+#include "SDL.h"
 
 #include <stdlib.h>
-
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -32,21 +30,21 @@ loop()
     SDL_Event e;
 
     while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_EVENT_QUIT) {
+        if (e.type == SDL_QUIT) {
             please_quit = SDL_TRUE;
-        } else if (e.type == SDL_EVENT_KEY_DOWN) {
+        } else if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_ESCAPE) {
                 please_quit = SDL_TRUE;
             }
-        } else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        } else if (e.type == SDL_MOUSEBUTTONDOWN) {
             if (e.button.button == 1) {
-                SDL_PauseAudioDevice(devid_out);
-                SDL_PlayAudioDevice(devid_in);
+                SDL_PauseAudioDevice(devid_out, SDL_TRUE);
+                SDL_PauseAudioDevice(devid_in, SDL_FALSE);
             }
-        } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+        } else if (e.type == SDL_MOUSEBUTTONUP) {
             if (e.button.button == 1) {
-                SDL_PauseAudioDevice(devid_in);
-                SDL_PlayAudioDevice(devid_out);
+                SDL_PauseAudioDevice(devid_in, SDL_TRUE);
+                SDL_PauseAudioDevice(devid_out, SDL_FALSE);
             }
         }
     }
@@ -62,16 +60,16 @@ loop()
     if (please_quit) {
         /* stop playing back, quit. */
         SDL_Log("Shutting down.\n");
-        SDL_PauseAudioDevice(devid_in);
+        SDL_PauseAudioDevice(devid_in, 1);
         SDL_CloseAudioDevice(devid_in);
-        SDL_PauseAudioDevice(devid_out);
+        SDL_PauseAudioDevice(devid_out, 1);
         SDL_CloseAudioDevice(devid_out);
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
-#ifdef __EMSCRIPTEN__
+        #ifdef __EMSCRIPTEN__
         emscripten_cancel_main_loop();
-#endif
+        #endif
         exit(0);
     }
 
@@ -80,15 +78,16 @@ loop()
         trying to test the API, so we use SDL_DequeueAudio() here. */
     while (SDL_TRUE) {
         Uint8 buf[1024];
-        const Uint32 br = SDL_DequeueAudio(devid_in, buf, sizeof(buf));
+        const Uint32 br = SDL_DequeueAudio(devid_in, buf, sizeof (buf));
         SDL_QueueAudio(devid_out, buf, br);
-        if (br < sizeof(buf)) {
+        if (br < sizeof (buf)) {
             break;
         }
     }
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     /* (argv[1] == NULL means "open default device.") */
     const char *devname = argv[1];
@@ -102,11 +101,11 @@ int main(int argc, char **argv)
     /* Load the SDL library */
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
-        return 1;
+        return (1);
     }
 
     window = SDL_CreateWindow("testaudiocapture", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, 0);
-    renderer = SDL_CreateRenderer(window, NULL, 0);
+    renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
@@ -158,11 +157,9 @@ int main(int argc, char **argv)
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(loop, 0, 1);
 #else
-    while (1) {
-        loop();
-        SDL_Delay(16);
-    }
+    while (1) { loop(); SDL_Delay(16); }
 #endif
 
     return 0;
 }
+

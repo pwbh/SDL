@@ -18,9 +18,10 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 extern "C" {
+#include "SDL_thread.h"
 }
 
 #include <chrono>
@@ -36,14 +37,15 @@ struct SDL_cond
 };
 
 /* Create a condition variable */
-extern "C" SDL_cond *
+extern "C"
+SDL_cond *
 SDL_CreateCond(void)
 {
     /* Allocate and initialize the condition variable */
     try {
-        SDL_cond *cond = new SDL_cond;
+        SDL_cond * cond = new SDL_cond;
         return cond;
-    } catch (std::system_error &ex) {
+    } catch (std::system_error & ex) {
         SDL_SetError("unable to create a C++ condition variable: code=%d; %s", ex.code(), ex.what());
         return NULL;
     } catch (std::bad_alloc &) {
@@ -53,19 +55,21 @@ SDL_CreateCond(void)
 }
 
 /* Destroy a condition variable */
-extern "C" void
-SDL_DestroyCond(SDL_cond *cond)
+extern "C"
+void
+SDL_DestroyCond(SDL_cond * cond)
 {
-    if (cond != NULL) {
+    if (cond) {
         delete cond;
     }
 }
 
 /* Restart one of the threads that are waiting on the condition variable */
-extern "C" int
-SDL_CondSignal(SDL_cond *cond)
+extern "C"
+int
+SDL_CondSignal(SDL_cond * cond)
 {
-    if (cond == NULL) {
+    if (!cond) {
         return SDL_InvalidParamError("cond");
     }
 
@@ -74,10 +78,11 @@ SDL_CondSignal(SDL_cond *cond)
 }
 
 /* Restart all threads that are waiting on the condition variable */
-extern "C" int
-SDL_CondBroadcast(SDL_cond *cond)
+extern "C"
+int
+SDL_CondBroadcast(SDL_cond * cond)
 {
-    if (cond == NULL) {
+    if (!cond) {
         return SDL_InvalidParamError("cond");
     }
 
@@ -85,7 +90,7 @@ SDL_CondBroadcast(SDL_cond *cond)
     return 0;
 }
 
-/* Wait on the condition variable for at most 'timeoutNS' nanoseconds.
+/* Wait on the condition variable for at most 'ms' milliseconds.
    The mutex must be locked before entering this function!
    The mutex is unlocked during the wait, and locked again after the wait.
 
@@ -106,28 +111,31 @@ Thread B:
     SDL_CondSignal(cond);
     SDL_UnlockMutex(lock);
  */
-extern "C" int
-SDL_CondWaitTimeoutNS(SDL_cond *cond, SDL_mutex *mutex, Sint64 timeoutNS)
+extern "C"
+int
+SDL_CondWaitTimeout(SDL_cond * cond, SDL_mutex * mutex, Uint32 ms)
 {
-    if (cond == NULL) {
+    if (!cond) {
         return SDL_InvalidParamError("cond");
     }
 
-    if (mutex == NULL) {
+    if (!mutex) {
         return SDL_InvalidParamError("mutex");
     }
 
     try {
         std::unique_lock<std::recursive_mutex> cpp_lock(mutex->cpp_mutex, std::adopt_lock_t());
-        if (timeoutNS < 0) {
+        if (ms == SDL_MUTEX_MAXWAIT) {
             cond->cpp_cond.wait(
-                cpp_lock);
+                cpp_lock
+                );
             cpp_lock.release();
             return 0;
         } else {
             auto wait_result = cond->cpp_cond.wait_for(
                 cpp_lock,
-                std::chrono::duration<Sint64, std::nano>(timeoutNS));
+                std::chrono::duration<Uint32, std::milli>(ms)
+                );
             cpp_lock.release();
             if (wait_result == std::cv_status::timeout) {
                 return SDL_MUTEX_TIMEDOUT;
@@ -135,7 +143,17 @@ SDL_CondWaitTimeoutNS(SDL_cond *cond, SDL_mutex *mutex, Sint64 timeoutNS)
                 return 0;
             }
         }
-    } catch (std::system_error &ex) {
-        return SDL_SetError("Unable to wait on a C++ condition variable: code=%d; %s", ex.code(), ex.what());
+    } catch (std::system_error & ex) {
+        return SDL_SetError("unable to wait on a C++ condition variable: code=%d; %s", ex.code(), ex.what());
     }
 }
+
+/* Wait on the condition variable forever */
+extern "C"
+int
+SDL_CondWait(SDL_cond * cond, SDL_mutex * mutex)
+{
+    return SDL_CondWaitTimeout(cond, mutex, SDL_MUTEX_MAXWAIT);
+}
+
+/* vi: set ts=4 sw=4 expandtab: */

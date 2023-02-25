@@ -18,14 +18,17 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_AUDIO_DRIVER_N3DS
+
+#include "SDL_audio.h"
 
 /* N3DS Audio driver */
 
 #include "../SDL_sysaudio.h"
 #include "SDL_n3dsaudio.h"
+#include "SDL_timer.h"
 
 #define N3DSAUDIO_DRIVER_NAME "n3ds"
 
@@ -35,27 +38,32 @@ static SDL_AudioDevice *audio_device;
 static void FreePrivateData(_THIS);
 static int FindAudioFormat(_THIS);
 
-static SDL_INLINE void contextLock(_THIS)
+static SDL_INLINE void
+contextLock(_THIS)
 {
     LightLock_Lock(&this->hidden->lock);
 }
 
-static SDL_INLINE void contextUnlock(_THIS)
+static SDL_INLINE void
+contextUnlock(_THIS)
 {
     LightLock_Unlock(&this->hidden->lock);
 }
 
-static void N3DSAUD_LockAudio(_THIS)
+static void
+N3DSAUD_LockAudio(_THIS)
 {
     contextLock(this);
 }
 
-static void N3DSAUD_UnlockAudio(_THIS)
+static void
+N3DSAUD_UnlockAudio(_THIS)
 {
     contextUnlock(this);
 }
 
-static void N3DSAUD_DspHook(DSP_HookType hook)
+static void
+N3DSAUD_DspHook(DSP_HookType hook)
 {
     if (hook == DSPHOOK_ONCANCEL) {
         contextLock(audio_device);
@@ -66,11 +74,12 @@ static void N3DSAUD_DspHook(DSP_HookType hook)
     }
 }
 
-static void AudioFrameFinished(void *device)
+static void
+AudioFrameFinished(void *device)
 {
     bool shouldBroadcast = false;
     unsigned i;
-    SDL_AudioDevice *this = (SDL_AudioDevice *)device;
+    SDL_AudioDevice *this = (SDL_AudioDevice *) device;
 
     contextLock(this);
 
@@ -88,12 +97,13 @@ static void AudioFrameFinished(void *device)
     contextUnlock(this);
 }
 
-static int N3DSAUDIO_OpenDevice(_THIS, const char *devname)
+static int
+N3DSAUDIO_OpenDevice(_THIS, const char *devname)
 {
     Result ndsp_init_res;
     Uint8 *data_vaddr;
     float mix[12];
-    this->hidden = (struct SDL_PrivateAudioData *)SDL_calloc(1, sizeof *this->hidden);
+    this->hidden = (struct SDL_PrivateAudioData *) SDL_calloc(1, sizeof *this->hidden);
 
     if (this->hidden == NULL) {
         return SDL_OutOfMemory();
@@ -132,14 +142,14 @@ static int N3DSAUDIO_OpenDevice(_THIS, const char *devname)
     }
 
     this->hidden->mixlen = this->spec.size;
-    this->hidden->mixbuf = (Uint8 *)SDL_malloc(this->spec.size);
+    this->hidden->mixbuf = (Uint8 *) SDL_malloc(this->spec.size);
     if (this->hidden->mixbuf == NULL) {
         return SDL_OutOfMemory();
     }
 
     SDL_memset(this->hidden->mixbuf, this->spec.silence, this->spec.size);
 
-    data_vaddr = (Uint8 *)linearAlloc(this->hidden->mixlen * NUM_BUFFERS);
+    data_vaddr = (Uint8 *) linearAlloc(this->hidden->mixlen * NUM_BUFFERS);
     if (data_vaddr == NULL) {
         return SDL_OutOfMemory();
     }
@@ -178,7 +188,8 @@ static int N3DSAUDIO_OpenDevice(_THIS, const char *devname)
     return 0;
 }
 
-static int N3DSAUDIO_CaptureFromDevice(_THIS, void *buffer, int buflen)
+static int
+N3DSAUDIO_CaptureFromDevice(_THIS, void *buffer, int buflen)
 {
     /* Delay to make this sort of simulate real audio input. */
     SDL_Delay((this->spec.samples * 1000) / this->spec.freq);
@@ -188,7 +199,8 @@ static int N3DSAUDIO_CaptureFromDevice(_THIS, void *buffer, int buflen)
     return buflen;
 }
 
-static void N3DSAUDIO_PlayDevice(_THIS)
+static void
+N3DSAUDIO_PlayDevice(_THIS)
 {
     size_t nextbuf;
     size_t sampleLen;
@@ -207,14 +219,15 @@ static void N3DSAUDIO_PlayDevice(_THIS)
 
     contextUnlock(this);
 
-    memcpy((void *)this->hidden->waveBuf[nextbuf].data_vaddr,
+    memcpy((void *) this->hidden->waveBuf[nextbuf].data_vaddr,
            this->hidden->mixbuf, sampleLen);
     DSP_FlushDataCache(this->hidden->waveBuf[nextbuf].data_vaddr, sampleLen);
 
     ndspChnWaveBufAdd(0, &this->hidden->waveBuf[nextbuf]);
 }
 
-static void N3DSAUDIO_WaitDevice(_THIS)
+static void
+N3DSAUDIO_WaitDevice(_THIS)
 {
     contextLock(this);
     while (!this->hidden->isCancelled &&
@@ -224,12 +237,14 @@ static void N3DSAUDIO_WaitDevice(_THIS)
     contextUnlock(this);
 }
 
-static Uint8 *N3DSAUDIO_GetDeviceBuf(_THIS)
+static Uint8 *
+N3DSAUDIO_GetDeviceBuf(_THIS)
 {
     return this->hidden->mixbuf;
 }
 
-static void N3DSAUDIO_CloseDevice(_THIS)
+static void
+N3DSAUDIO_CloseDevice(_THIS)
 {
     contextLock(this);
 
@@ -249,7 +264,8 @@ static void N3DSAUDIO_CloseDevice(_THIS)
     FreePrivateData(this);
 }
 
-static void N3DSAUDIO_ThreadInit(_THIS)
+static void
+N3DSAUDIO_ThreadInit(_THIS)
 {
     s32 current_priority;
     svcGetThreadPriority(&current_priority, CUR_THREAD_HANDLE);
@@ -259,7 +275,8 @@ static void N3DSAUDIO_ThreadInit(_THIS)
     svcSetThreadPriority(CUR_THREAD_HANDLE, current_priority);
 }
 
-static SDL_bool N3DSAUDIO_Init(SDL_AudioDriverImpl *impl)
+static SDL_bool
+N3DSAUDIO_Init(SDL_AudioDriverImpl *impl)
 {
     /* Set the function pointers */
     impl->OpenDevice = N3DSAUDIO_OpenDevice;
@@ -289,14 +306,15 @@ AudioBootStrap N3DSAUDIO_bootstrap = {
 /**
  * Cleans up all allocated memory, safe to call with null pointers
  */
-static void FreePrivateData(_THIS)
+static void
+FreePrivateData(_THIS)
 {
     if (!this->hidden) {
         return;
     }
 
     if (this->hidden->waveBuf[0].data_vaddr) {
-        linearFree((void *)this->hidden->waveBuf[0].data_vaddr);
+        linearFree((void *) this->hidden->waveBuf[0].data_vaddr);
     }
 
     if (this->hidden->mixbuf) {
@@ -308,10 +326,11 @@ static void FreePrivateData(_THIS)
     this->hidden = NULL;
 }
 
-static int FindAudioFormat(_THIS)
+static int
+FindAudioFormat(_THIS)
 {
     SDL_bool found_valid_format = SDL_FALSE;
-    Uint16 test_format = SDL_GetFirstAudioFormat(this->spec.format);
+    Uint16 test_format = SDL_FirstAudioFormat(this->spec.format);
 
     while (!found_valid_format && test_format) {
         this->spec.format = test_format;
@@ -331,7 +350,7 @@ static int FindAudioFormat(_THIS)
             found_valid_format = SDL_TRUE;
             break;
         default:
-            test_format = SDL_GetNextAudioFormat();
+            test_format = SDL_NextAudioFormat();
             break;
         }
     }
@@ -340,3 +359,5 @@ static int FindAudioFormat(_THIS)
 }
 
 #endif /* SDL_AUDIO_DRIVER_N3DS */
+
+/* vi: set sts=4 ts=4 sw=4 expandtab: */

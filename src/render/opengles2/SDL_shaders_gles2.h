@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifndef SDL_shaders_gles2_h_
 #define SDL_shaders_gles2_h_
@@ -69,3 +69,5 @@ extern GLES2_ShaderIncludeType GLES2_GetTexCoordPrecisionEnumFromHint(void);
 #endif /* SDL_VIDEO_RENDER_OGL_ES2 */
 
 #endif /* SDL_shaders_gles2_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

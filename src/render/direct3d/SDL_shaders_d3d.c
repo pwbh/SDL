@@ -18,7 +18,10 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
+
+#include "SDL_render.h"
+#include "SDL_system.h"
 
 #if SDL_VIDEO_RENDER_D3D && !SDL_RENDER_DISABLED
 
@@ -254,6 +257,7 @@ static const DWORD D3D9_PixelShader_YUV_BT709[] = {
     0x90e40000, 0x02000001, 0x800f0800, 0x80e40000, 0x0000ffff
 };
 
+
 static const DWORD *D3D9_shaders[] = {
     D3D9_PixelShader_YUV_JPEG,
     D3D9_PixelShader_YUV_BT601,
@@ -266,3 +270,5 @@ HRESULT D3D9_CreatePixelShader(IDirect3DDevice9 *d3dDevice, D3D9_Shader shader, 
 }
 
 #endif /* SDL_VIDEO_RENDER_D3D && !SDL_RENDER_DISABLED */
+
+/* vi: set ts=4 sw=4 expandtab: */

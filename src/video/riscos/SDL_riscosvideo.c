@@ -18,10 +18,12 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_RISCOS
 
+#include "SDL_video.h"
+#include "SDL_mouse.h"
 #include "../SDL_sysvideo.h"
 #include "../SDL_pixels_c.h"
 #include "../../events/SDL_events_c.h"
@@ -41,26 +43,28 @@ static void RISCOS_VideoQuit(_THIS);
 
 /* RISC OS driver bootstrap functions */
 
-static void RISCOS_DeleteDevice(SDL_VideoDevice *device)
+static void
+RISCOS_DeleteDevice(SDL_VideoDevice * device)
 {
     SDL_free(device->driverdata);
     SDL_free(device);
 }
 
-static SDL_VideoDevice *RISCOS_CreateDevice(void)
+static SDL_VideoDevice *
+RISCOS_CreateDevice(void)
 {
     SDL_VideoDevice *device;
     SDL_VideoData *phdata;
 
     /* Initialize all variables that we clean on shutdown */
-    device = (SDL_VideoDevice *)SDL_calloc(1, sizeof(SDL_VideoDevice));
-    if (device == NULL) {
+    device = (SDL_VideoDevice *) SDL_calloc(1, sizeof(SDL_VideoDevice));
+    if (!device) {
         SDL_OutOfMemory();
-        return 0;
+        return (0);
     }
 
     /* Initialize internal data */
-    phdata = (SDL_VideoData *)SDL_calloc(1, sizeof(SDL_VideoData));
+    phdata = (SDL_VideoData *) SDL_calloc(1, sizeof(SDL_VideoData));
     if (phdata == NULL) {
         SDL_OutOfMemory();
         SDL_free(device);
@@ -95,7 +99,8 @@ VideoBootStrap RISCOS_bootstrap = {
     RISCOS_CreateDevice
 };
 
-static int RISCOS_VideoInit(_THIS)
+static int
+RISCOS_VideoInit(_THIS)
 {
     if (RISCOS_InitEvents(_this) < 0) {
         return -1;
@@ -113,9 +118,12 @@ static int RISCOS_VideoInit(_THIS)
     return 0;
 }
 
-static void RISCOS_VideoQuit(_THIS)
+static void
+RISCOS_VideoQuit(_THIS)
 {
     RISCOS_QuitEvents(_this);
 }
 
 #endif /* SDL_VIDEO_DRIVER_RISCOS */
+
+/* vi: set ts=4 sw=4 expandtab: */

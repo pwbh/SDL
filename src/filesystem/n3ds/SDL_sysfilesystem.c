@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_FILESYSTEM_N3DS
 
@@ -28,6 +28,9 @@
 #include <3ds.h>
 #include <dirent.h>
 #include <errno.h>
+
+#include "SDL_error.h"
+#include "SDL_filesystem.h"
 
 SDL_FORCE_INLINE char *MakePrefPath(const char *app);
 SDL_FORCE_INLINE int CreatePrefPathDir(const char *pref);
@@ -84,3 +87,5 @@ CreatePrefPathDir(const char *pref)
 }
 
 #endif /* SDL_FILESYSTEM_N3DS */
+
+/* vi: set sts=4 ts=4 sw=4 expandtab: */

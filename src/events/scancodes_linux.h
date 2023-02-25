@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../include/SDL_scancode.h"
 
 /* Linux virtual key code to SDL_Keycode mapping table
    Sources:
@@ -804,7 +804,7 @@ static SDL_Scancode const linux_scancode_table[] = {
 function get_keyname
 {
     value=$(echo "$1" | awk '{print $3}')
-    grep -F KEY_ /usr/include/linux/input-event-codes.h | while read line; do
+    fgrep KEY_ /usr/include/linux/input-event-codes.h | while read line; do
         read -ra fields <<<"$line"
         if [ "${fields[2]}" = "$value" ]; then
             echo "${fields[1]}"
@@ -813,7 +813,7 @@ function get_keyname
     done
 }
 
-grep -F SDL_SCANCODE scancodes_linux.h | while read line; do
+fgrep SDL_SCANCODE scancodes_linux.h | while read line; do
     if [ $(echo "$line" | awk '{print NF}') -eq 5 ]; then
         name=$(get_keyname "$line")
         if [ "$name" != "" ]; then
@@ -832,11 +832,11 @@ function get_comment
 {   
     name=$(echo "$1" | awk '{print $7}')
     if [ "$name" != "" ]; then
-        grep -E "$name\s" /usr/include/linux/input-event-codes.h | grep -F "/*" | sed 's,[^/]*/,/,'
+        egrep "$name\s" /usr/include/linux/input-event-codes.h | fgrep "/*" | sed 's,[^/]*/,/,'
     fi
 }
 
-grep -F SDL_SCANCODE scancodes_linux.h | while read line; do
+fgrep SDL_SCANCODE scancodes_linux.h | while read line; do
     comment=$(get_comment "$line")
     if [ "$comment" != "" ]; then
         echo "    $line $comment"
@@ -846,3 +846,5 @@ done
 
 
 /* *INDENT-ON* */ /* clang-format on */
+
+/* vi: set ts=4 sw=4 expandtab: */

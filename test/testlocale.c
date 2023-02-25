@@ -9,8 +9,8 @@
   including commercial applications, and to alter it and redistribute it
   freely.
 */
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include <stdio.h>
+#include "SDL.h"
 
 /* !!! FIXME: move this to the test framework */
 
@@ -47,10 +47,10 @@ int main(int argc, char **argv)
             while (keep_going) {
                 SDL_Event e;
                 while (SDL_PollEvent(&e)) {
-                    if (e.type == SDL_EVENT_QUIT) {
+                    if (e.type == SDL_QUIT) {
                         keep_going = SDL_FALSE;
-                    } else if (e.type == SDL_EVENT_LOCALE_CHANGED) {
-                        SDL_Log("Saw SDL_EVENT_LOCALE_CHANGED event!");
+                    } else if (e.type == SDL_LOCALECHANGED) {
+                        SDL_Log("Saw SDL_LOCALECHANGED event!");
                         log_locales();
                     }
                 }
@@ -61,5 +61,7 @@ int main(int argc, char **argv)
         SDL_Quit();
     }
 
-    return 0;
+   return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

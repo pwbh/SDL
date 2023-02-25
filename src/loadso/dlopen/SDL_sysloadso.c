@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_LOADSO_DLOPEN
 
@@ -28,11 +28,14 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
+#include "SDL_loadso.h"
+
 #if SDL_VIDEO_DRIVER_UIKIT
 #include "../../video/uikit/SDL_uikitvideo.h"
 #endif
 
-void *SDL_LoadObject(const char *sofile)
+void *
+SDL_LoadObject(const char *sofile)
 {
     void *handle;
     const char *loaderror;
@@ -44,15 +47,16 @@ void *SDL_LoadObject(const char *sofile)
     }
 #endif
 
-    handle = dlopen(sofile, RTLD_NOW | RTLD_LOCAL);
+    handle = dlopen(sofile, RTLD_NOW|RTLD_LOCAL);
     loaderror = dlerror();
     if (handle == NULL) {
         SDL_SetError("Failed loading %s: %s", sofile, loaderror);
     }
-    return handle;
+    return (handle);
 }
 
-SDL_FunctionPointer SDL_LoadFunction(void *handle, const char *name)
+void *
+SDL_LoadFunction(void *handle, const char *name)
 {
     void *symbol = dlsym(handle, name);
     if (symbol == NULL) {
@@ -66,13 +70,14 @@ SDL_FunctionPointer SDL_LoadFunction(void *handle, const char *name)
         SDL_small_free(_name, isstack);
         if (symbol == NULL) {
             SDL_SetError("Failed loading %s: %s", name,
-                         (const char *)dlerror());
+                         (const char *) dlerror());
         }
     }
-    return symbol;
+    return (symbol);
 }
 
-void SDL_UnloadObject(void *handle)
+void
+SDL_UnloadObject(void *handle)
 {
     if (handle != NULL) {
         dlclose(handle);
@@ -80,3 +85,5 @@ void SDL_UnloadObject(void *handle)
 }
 
 #endif /* SDL_LOADSO_DLOPEN */
+
+/* vi: set ts=4 sw=4 expandtab: */

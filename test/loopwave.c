@@ -15,22 +15,24 @@
 /* loopwaves.c is much more robust in handling WAVE files --
     This is only for simple WAVEs
 */
+#include "SDL_config.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include "SDL.h"
 #include "testutils.h"
 
 static struct
 {
     SDL_AudioSpec spec;
-    Uint8 *sound;    /* Pointer to wave data */
-    Uint32 soundlen; /* Length of wave data */
-    int soundpos;    /* Current play position */
+    Uint8 *sound;               /* Pointer to wave data */
+    Uint32 soundlen;            /* Length of wave data */
+    int soundpos;               /* Current play position */
 } wave;
 
 static SDL_AudioDeviceID device;
@@ -59,12 +61,13 @@ open_audio()
     device = SDL_OpenAudioDevice(NULL, SDL_FALSE, &wave.spec, NULL, 0);
     if (!device) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't open audio: %s\n", SDL_GetError());
-        SDL_free(wave.sound);
+        SDL_FreeWAV(wave.sound);
         quit(2);
     }
 
+
     /* Let the audio run */
-    SDL_PlayAudioDevice(device);
+    SDL_PauseAudioDevice(device, SDL_FALSE);
 }
 
 #ifndef __EMSCRIPTEN__
@@ -76,7 +79,7 @@ static void reopen_audio()
 #endif
 
 void SDLCALL
-fillerup(void *unused, Uint8 *stream, int len)
+fillerup(void *unused, Uint8 * stream, int len)
 {
     Uint8 *waveptr;
     int waveleft;
@@ -101,15 +104,16 @@ fillerup(void *unused, Uint8 *stream, int len)
 static int done = 0;
 
 #ifdef __EMSCRIPTEN__
-void loop()
+void
+loop()
 {
-    if (done || (SDL_GetAudioDeviceStatus(device) != SDL_AUDIO_PLAYING)) {
+    if(done || (SDL_GetAudioDeviceStatus(device) != SDL_AUDIO_PLAYING))
         emscripten_cancel_main_loop();
-    }
 }
 #endif
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     int i;
     char *filename = NULL;
@@ -118,9 +122,9 @@ int main(int argc, char *argv[])
     SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Load the SDL library */
-    if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS) < 0) {
+    if (SDL_Init(SDL_INIT_AUDIO|SDL_INIT_EVENTS) < 0) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
-        return 1;
+        return (1);
     }
 
     filename = GetResourceFilename(argc > 1 ? argv[1] : NULL, "sample.wav");
@@ -148,7 +152,7 @@ int main(int argc, char *argv[])
 
     open_audio();
 
-    SDL_FlushEvents(SDL_EVENT_AUDIO_DEVICE_ADDED, SDL_EVENT_AUDIO_DEVICE_REMOVED);
+    SDL_FlushEvents(SDL_AUDIODEVICEADDED, SDL_AUDIODEVICEREMOVED);
 
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(loop, 0, 1);
@@ -157,11 +161,11 @@ int main(int argc, char *argv[])
         SDL_Event event;
 
         while (SDL_PollEvent(&event) > 0) {
-            if (event.type == SDL_EVENT_QUIT) {
+            if (event.type == SDL_QUIT) {
                 done = 1;
             }
-            if ((event.type == SDL_EVENT_AUDIO_DEVICE_ADDED && !event.adevice.iscapture) ||
-                (event.type == SDL_EVENT_AUDIO_DEVICE_REMOVED && !event.adevice.iscapture && event.adevice.which == device)) {
+            if ((event.type == SDL_AUDIODEVICEADDED && !event.adevice.iscapture) ||
+                (event.type == SDL_AUDIODEVICEREMOVED && !event.adevice.iscapture && event.adevice.which == device)) {
                 reopen_audio();
             }
         }
@@ -171,8 +175,10 @@ int main(int argc, char *argv[])
 
     /* Clean up on signal */
     close_audio();
-    SDL_free(wave.sound);
+    SDL_FreeWAV(wave.sound);
     SDL_free(filename);
     SDL_Quit();
-    return 0;
+    return (0);
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_THREAD_VITA
 
@@ -27,21 +27,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "SDL_error.h"
+#include "SDL_thread.h"
+
 #include <psp2/types.h>
 #include <psp2/kernel/error.h>
 #include <psp2/kernel/threadmgr.h>
 
-struct SDL_semaphore
-{
-    SceUID semid;
+struct SDL_semaphore {
+    SceUID  semid;
 };
+
 
 /* Create a semaphore */
 SDL_sem *SDL_CreateSemaphore(Uint32 initial_value)
 {
     SDL_sem *sem;
 
-    sem = (SDL_sem *)SDL_malloc(sizeof(*sem));
+    sem = (SDL_sem *) SDL_malloc(sizeof(*sem));
     if (sem != NULL) {
         /* TODO: Figure out the limit on the maximum value. */
         sem->semid = sceKernelCreateSema("SDL sema", 0, initial_value, 255, NULL);
@@ -74,17 +77,17 @@ void SDL_DestroySemaphore(SDL_sem *sem)
  * If the timeout is 0 then just poll the semaphore; if it's SDL_MUTEX_MAXWAIT, pass
  * NULL to sceKernelWaitSema() so that it waits indefinitely; and if the timeout
  * is specified, convert it to microseconds. */
-int SDL_SemWaitTimeoutNS(SDL_sem *sem, Sint64 timeoutNS)
+int SDL_SemWaitTimeout(SDL_sem *sem, Uint32 timeout)
 {
-    SceUInt timeoutUS;
-    SceUInt *pTimeout;
-    int res;
+    Uint32 *pTimeout;
+       unsigned int res;
 
     if (sem == NULL) {
-        return SDL_InvalidParamError("sem");
+        SDL_InvalidParamError("sem");
+        return 0;
     }
 
-    if (timeoutNS == 0) {
+    if (timeout == 0) {
         res = sceKernelPollSema(sem->semid, 1);
         if (res < 0) {
             return SDL_MUTEX_TIMEDOUT;
@@ -92,22 +95,32 @@ int SDL_SemWaitTimeoutNS(SDL_sem *sem, Sint64 timeoutNS)
         return 0;
     }
 
-    if (timeoutNS < 0) {
+    if (timeout == SDL_MUTEX_MAXWAIT) {
         pTimeout = NULL;
     } else {
-        timeoutUS = (SceUInt)SDL_NS_TO_US(timeoutNS); /* Convert to microseconds. */
-        pTimeout = &timeoutUS;
+        timeout *= 1000;  /* Convert to microseconds. */
+        pTimeout = &timeout;
     }
 
     res = sceKernelWaitSema(sem->semid, 1, pTimeout);
-    switch (res) {
-    case SCE_KERNEL_OK:
-        return 0;
-    case SCE_KERNEL_ERROR_WAIT_TIMEOUT:
-        return SDL_MUTEX_TIMEDOUT;
-    default:
-        return SDL_SetError("sceKernelWaitSema() failed");
+       switch (res) {
+               case SCE_KERNEL_OK:
+                       return 0;
+               case SCE_KERNEL_ERROR_WAIT_TIMEOUT:
+                       return SDL_MUTEX_TIMEDOUT;
+               default:
+                       return SDL_SetError("WaitForSingleObject() failed");
     }
+}
+
+int SDL_SemTryWait(SDL_sem *sem)
+{
+    return SDL_SemWaitTimeout(sem, 0);
+}
+
+int SDL_SemWait(SDL_sem *sem)
+{
+    return SDL_SemWaitTimeout(sem, SDL_MUTEX_MAXWAIT);
 }
 
 /* Returns the current count of the semaphore */
@@ -145,3 +158,5 @@ int SDL_SemPost(SDL_sem *sem)
 }
 
 #endif /* SDL_THREAD_VITA */
+
+/* vi: set ts=4 sw=4 expandtab: */

@@ -20,8 +20,9 @@
  code repository located at:
         https://github.com/libusb/hidapi .
 ********************************************************/
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
+#include "SDL_hints.h"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* needed for wcsdup() before glibc 2.10 */

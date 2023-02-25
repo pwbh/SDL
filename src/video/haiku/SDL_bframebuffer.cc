@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_HAIKU
 
@@ -29,18 +29,18 @@
 #include "SDL_bmodes.h"
 #include "SDL_BWin.h"
 
-#include "../../core/haiku/SDL_BApp.h"
+#include "../../main/haiku/SDL_BApp.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 static SDL_INLINE SDL_BWin *_ToBeWin(SDL_Window *window) {
-    return (SDL_BWin *)(window->driverdata);
+    return ((SDL_BWin*)(window->driverdata));
 }
 
 static SDL_INLINE SDL_BApp *_GetBeApp() {
-    return (SDL_BApp *)be_app;
+    return ((SDL_BApp*)be_app);
 }
 
 int HAIKU_CreateWindowFramebuffer(_THIS, SDL_Window * window,
@@ -48,7 +48,7 @@ int HAIKU_CreateWindowFramebuffer(_THIS, SDL_Window * window,
                                        void ** pixels, int *pitch) {
     SDL_BWin *bwin = _ToBeWin(window);
     BScreen bscreen;
-    if (!bscreen.IsValid()) {
+    if(!bscreen.IsValid()) {
         return -1;
     }
 
@@ -65,14 +65,14 @@ int HAIKU_CreateWindowFramebuffer(_THIS, SDL_Window * window,
     /* Create the new bitmap object */
     BBitmap *bitmap = bwin->GetBitmap();
 
-    if (bitmap) {
+    if(bitmap) {
         delete bitmap;
     }
     bitmap = new BBitmap(bwin->Bounds(), (color_space)bmode.space,
             false,    /* Views not accepted */
             true);    /* Contiguous memory required */
 
-    if (bitmap->InitCheck() != B_OK) {
+    if(bitmap->InitCheck() != B_OK) {
         delete bitmap;
         return SDL_SetError("Could not initialize back buffer!");
     }
@@ -94,9 +94,8 @@ int HAIKU_CreateWindowFramebuffer(_THIS, SDL_Window * window,
 
 int HAIKU_UpdateWindowFramebuffer(_THIS, SDL_Window * window,
                                       const SDL_Rect * rects, int numrects) {
-    if (window == NULL) {
+    if(!window)
         return 0;
-    }
 
     SDL_BWin *bwin = _ToBeWin(window);
 
@@ -125,3 +124,5 @@ void HAIKU_DestroyWindowFramebuffer(_THIS, SDL_Window * window) {
 #endif
 
 #endif /* SDL_VIDEO_DRIVER_HAIKU */
+
+/* vi: set ts=4 sw=4 expandtab: */

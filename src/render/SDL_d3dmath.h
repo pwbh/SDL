@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../SDL_internal.h"
 
 #if (SDL_VIDEO_RENDER_D3D || SDL_VIDEO_RENDER_D3D11 || SDL_VIDEO_RENDER_D3D12) && !SDL_RENDER_DISABLED
 
@@ -52,10 +52,8 @@ typedef struct
 
 typedef struct
 {
-    union
-    {
-        struct
-        {
+    union {
+        struct {
             float _11, _12, _13, _14;
             float _21, _22, _23, _24;
             float _31, _32, _33, _34;
@@ -64,6 +62,7 @@ typedef struct
         float m[4][4];
     };
 } Float4X4;
+
 
 Float4X4 MatrixIdentity();
 Float4X4 MatrixMultiply(Float4X4 M1, Float4X4 M2);
@@ -79,3 +78,5 @@ Float4X4 MatrixRotationZ(float r);
 #endif
 
 #endif /* (SDL_VIDEO_RENDER_D3D || SDL_VIDEO_RENDER_D3D11 || SDL_VIDEO_RENDER_D3D12) && !SDL_RENDER_DISABLED */
+
+/* vi: set ts=4 sw=4 expandtab: */

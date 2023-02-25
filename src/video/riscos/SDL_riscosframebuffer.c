@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_RISCOS
 
@@ -30,54 +30,51 @@
 #include <kernel.h>
 #include <swis.h>
 
-int RISCOS_CreateWindowFramebuffer(_THIS, SDL_Window *window, Uint32 *format, void **pixels, int *pitch)
+int RISCOS_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format, void ** pixels, int *pitch)
 {
-    SDL_WindowData *driverdata = window->driverdata;
+    SDL_WindowData *driverdata = (SDL_WindowData *) window->driverdata;
     const char *sprite_name = "display";
     unsigned int sprite_mode;
     _kernel_oserror *error;
     _kernel_swi_regs regs;
-    const SDL_DisplayMode *mode;
+    SDL_DisplayMode mode;
     int size;
-    int w, h;
-
-    SDL_GetWindowSizeInPixels(window, &w, &h);
 
     /* Free the old framebuffer surface */
     RISCOS_DestroyWindowFramebuffer(_this, window);
 
     /* Create a new one */
-    mode = SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(window));
-    if ((SDL_ISPIXELFORMAT_PACKED(mode->format) || SDL_ISPIXELFORMAT_ARRAY(mode->format))) {
-        *format = mode->format;
-        sprite_mode = (unsigned int)mode->driverdata;
+    SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(window), &mode);
+    if ((SDL_ISPIXELFORMAT_PACKED(mode.format) || SDL_ISPIXELFORMAT_ARRAY(mode.format))) {
+        *format = mode.format;
+        sprite_mode = (unsigned int)mode.driverdata;
     } else {
         *format = SDL_PIXELFORMAT_BGR888;
         sprite_mode = (1 | (90 << 1) | (90 << 14) | (6 << 27));
     }
 
     /* Calculate pitch */
-    *pitch = (((w * SDL_BYTESPERPIXEL(*format)) + 3) & ~3);
+    *pitch = (((window->w * SDL_BYTESPERPIXEL(*format)) + 3) & ~3);
 
     /* Allocate the sprite area */
-    size = sizeof(sprite_area) + sizeof(sprite_header) + ((*pitch) * h);
+    size = sizeof(sprite_area) + sizeof(sprite_header) + ((*pitch) * window->h);
     driverdata->fb_area = SDL_malloc(size);
     if (!driverdata->fb_area) {
         return SDL_OutOfMemory();
     }
 
-    driverdata->fb_area->size = size;
+    driverdata->fb_area->size  = size;
     driverdata->fb_area->count = 0;
     driverdata->fb_area->start = 16;
-    driverdata->fb_area->end = 16;
+    driverdata->fb_area->end   = 16;
 
     /* Create the actual image */
-    regs.r[0] = 256 + 15;
+    regs.r[0] = 256+15;
     regs.r[1] = (int)driverdata->fb_area;
     regs.r[2] = (int)sprite_name;
     regs.r[3] = 0;
-    regs.r[4] = w;
-    regs.r[5] = h;
+    regs.r[4] = window->w;
+    regs.r[5] = window->h;
     regs.r[6] = sprite_mode;
     error = _kernel_swi(OS_SpriteOp, &regs, &regs);
     if (error != NULL) {
@@ -91,13 +88,13 @@ int RISCOS_CreateWindowFramebuffer(_THIS, SDL_Window *window, Uint32 *format, vo
     return 0;
 }
 
-int RISCOS_UpdateWindowFramebuffer(_THIS, SDL_Window *window, const SDL_Rect *rects, int numrects)
+int RISCOS_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect * rects, int numrects)
 {
-    SDL_WindowData *driverdata = window->driverdata;
+    SDL_WindowData *driverdata = (SDL_WindowData *) window->driverdata;
     _kernel_swi_regs regs;
     _kernel_oserror *error;
 
-    regs.r[0] = 512 + 52;
+    regs.r[0] = 512+52;
     regs.r[1] = (int)driverdata->fb_area;
     regs.r[2] = (int)driverdata->fb_sprite;
     regs.r[3] = 0; /* window->x << 1; */
@@ -113,9 +110,9 @@ int RISCOS_UpdateWindowFramebuffer(_THIS, SDL_Window *window, const SDL_Rect *re
     return 0;
 }
 
-void RISCOS_DestroyWindowFramebuffer(_THIS, SDL_Window *window)
+void RISCOS_DestroyWindowFramebuffer(_THIS, SDL_Window * window)
 {
-    SDL_WindowData *driverdata = window->driverdata;
+    SDL_WindowData *driverdata = (SDL_WindowData *) window->driverdata;
 
     if (driverdata->fb_area) {
         SDL_free(driverdata->fb_area);
@@ -125,3 +122,5 @@ void RISCOS_DestroyWindowFramebuffer(_THIS, SDL_Window *window)
 }
 
 #endif /* SDL_VIDEO_DRIVER_RISCOS */
+
+/* vi: set ts=4 sw=4 expandtab: */

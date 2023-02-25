@@ -6,7 +6,7 @@
 #ifndef _testsuites_h
 #define _testsuites_h
 
-#include <SDL3/SDL_test.h>
+#include "SDL_test.h"
 
 /* Test collections */
 extern SDLTest_TestSuiteReference audioTestSuite;
@@ -32,7 +32,7 @@ extern SDLTest_TestSuiteReference timerTestSuite;
 extern SDLTest_TestSuiteReference videoTestSuite;
 
 /* All test suites */
-static SDLTest_TestSuiteReference *testSuites[] = {
+SDLTest_TestSuiteReference *testSuites[] =  {
     &audioTestSuite,
     &clipboardTestSuite,
     &eventsTestSuite,

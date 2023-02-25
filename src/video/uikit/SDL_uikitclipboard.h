@@ -31,3 +31,5 @@ extern void UIKit_InitClipboard(_THIS);
 extern void UIKit_QuitClipboard(_THIS);
 
 #endif /* SDL_uikitclipboard_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

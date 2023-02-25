@@ -59,9 +59,9 @@ import java.util.Locale;
 */
 public class SDLActivity extends Activity implements View.OnSystemUiVisibilityChangeListener {
     private static final String TAG = "SDL";
-    private static final int SDL_MAJOR_VERSION = 3;
-    private static final int SDL_MINOR_VERSION = 0;
-    private static final int SDL_MICRO_VERSION = 0;
+    private static final int SDL_MAJOR_VERSION = 2;
+    private static final int SDL_MINOR_VERSION = 26;
+    private static final int SDL_MICRO_VERSION = 3;
 /*
     // Display InputType.SOURCE/CLASS of events and devices
     //
@@ -263,17 +263,17 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
      * This method is called by SDL before loading the native shared libraries.
      * It can be overridden to provide names of shared libraries to be loaded.
      * The default implementation returns the defaults. It never returns null.
-     * An array returned by a new implementation must at least contain "SDL3".
+     * An array returned by a new implementation must at least contain "SDL2".
      * Also keep in mind that the order the libraries are loaded may matter.
-     * @return names of shared libraries to be loaded (e.g. "SDL3", "main").
+     * @return names of shared libraries to be loaded (e.g. "SDL2", "main").
      */
     protected String[] getLibraries() {
         return new String[] {
-            "SDL3",
-            // "SDL3_image",
-            // "SDL3_mixer",
-            // "SDL3_net",
-            // "SDL3_ttf",
+            "SDL2",
+            // "SDL2_image",
+            // "SDL2_mixer",
+            // "SDL2_net",
+            // "SDL2_ttf",
             "main"
         };
     }
@@ -311,7 +311,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         mNextNativeState = NativeState.INIT;
         mCurrentNativeState = NativeState.INIT;
     }
-
+    
     protected SDLSurface createSDLSurface(Context context) {
         return new SDLSurface(context);
     }
@@ -393,7 +393,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         mHIDDeviceManager = HIDDeviceManager.acquire(this);
 
         // Set up the surface
-        mSurface = createSDLSurface(this);
+        mSurface = createSDLSurface(getApplication());
 
         mLayout = new RelativeLayout(this);
         mLayout.addView(mSurface);
@@ -587,8 +587,6 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             HIDDeviceManager.release(mHIDDeviceManager);
             mHIDDeviceManager = null;
         }
-
-        SDLAudioManager.release(this);
 
         if (SDLActivity.mBrokenLibraries) {
            super.onDestroy();
@@ -909,7 +907,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     public static native void nativeResume();
     public static native void nativeFocusChanged(boolean hasFocus);
     public static native void onNativeDropFile(String filename);
-    public static native void nativeSetScreenResolution(int surfaceWidth, int surfaceHeight, int deviceWidth, int deviceHeight, float density, float rate);
+    public static native void nativeSetScreenResolution(int surfaceWidth, int surfaceHeight, int deviceWidth, int deviceHeight, float rate);
     public static native void onNativeResize();
     public static native void onNativeKeyDown(int keycode);
     public static native void onNativeKeyUp(int keycode);
@@ -971,18 +969,15 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         /* If set, hint "explicitly controls which UI orientations are allowed". */
         if (hint.contains("LandscapeRight") && hint.contains("LandscapeLeft")) {
             orientation_landscape = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
-        } else if (hint.contains("LandscapeLeft")) {
-            orientation_landscape = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
         } else if (hint.contains("LandscapeRight")) {
+            orientation_landscape = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+        } else if (hint.contains("LandscapeLeft")) {
             orientation_landscape = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
         }
 
-        /* exact match to 'Portrait' to distinguish with PortraitUpsideDown */
-        boolean contains_Portrait = hint.contains("Portrait ") || hint.endsWith("Portrait");
-
-        if (contains_Portrait && hint.contains("PortraitUpsideDown")) {
+        if (hint.contains("Portrait") && hint.contains("PortraitUpsideDown")) {
             orientation_portrait = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
-        } else if (contains_Portrait) {
+        } else if (hint.contains("Portrait")) {
             orientation_portrait = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
         } else if (hint.contains("PortraitUpsideDown")) {
             orientation_portrait = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
@@ -1196,6 +1191,13 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         } catch(Exception ignored) {
             return false;
         }
+    }
+
+    /**
+     * This method is called by SDL using JNI.
+     */
+    public static DisplayMetrics getDisplayDPI() {
+        return getContext().getResources().getDisplayMetrics();
     }
 
     /**

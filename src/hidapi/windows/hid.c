@@ -19,8 +19,9 @@
  code repository located at:
         https://github.com/libusb/hidapi .
 ********************************************************/
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
+#include "SDL_hints.h"
 
 #include <windows.h>
 
@@ -86,6 +87,7 @@ extern "C" {
 /*#include <stdlib.h>*/
 
 /* SDL C runtime functions */
+#include "SDL_stdinc.h"
 
 #define calloc SDL_calloc
 #define free SDL_free
@@ -344,14 +346,13 @@ int hid_blacklist(unsigned short vendor_id, unsigned short product_id)
         { 0x1532, 0x010B },  /* Razer Arctosa Gaming keyboard */
         { 0x045E, 0x0822 },  /* Microsoft Precision Mouse */
         { 0x0D8C, 0x0014 },  /* Sharkoon Skiller SGH2 headset */
-        { 0x1CCF, 0x0000 },  /* All Konami Amusement Devices */
 
         /* Turns into an Android controller when enumerated... */
         { 0x0738, 0x2217 }   /* SPEEDLINK COMPETITION PRO */
     };
 
     for (i = 0; i < (sizeof(known_bad)/sizeof(known_bad[0])); i++) {
-        if ((vendor_id == known_bad[i].vid) && (product_id == known_bad[i].pid || known_bad[i].pid == 0x0000)) {
+        if ((vendor_id == known_bad[i].vid) && (product_id == known_bad[i].pid)) {
             return 1;
         }
     }

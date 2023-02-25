@@ -18,10 +18,12 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 /* Output audio to nowhere... */
 
+#include "SDL_timer.h"
+#include "SDL_audio.h"
 #include "../SDL_audio_c.h"
 #include "SDL_ps2audio.h"
 
@@ -31,9 +33,10 @@
 #include <ps2_audio_driver.h>
 
 /* The tag name used by PS2 audio */
-#define PS2AUDIO_DRIVER_NAME "ps2"
+#define PS2AUDIO_DRIVER_NAME    "ps2"
 
-static int PS2AUDIO_OpenDevice(_THIS, const char *devname)
+static int
+PS2AUDIO_OpenDevice(_THIS, const char *devname)
 {
     int i, mixlen;
     struct audsrv_fmt_t format;
@@ -45,20 +48,21 @@ static int PS2AUDIO_OpenDevice(_THIS, const char *devname)
     }
     SDL_zerop(this->hidden);
 
+
     /* These are the native supported audio PS2 configs  */
     switch (this->spec.freq) {
-    case 11025:
-    case 12000:
-    case 22050:
-    case 24000:
-    case 32000:
-    case 44100:
-    case 48000:
-        this->spec.freq = this->spec.freq;
-        break;
-    default:
-        this->spec.freq = 48000;
-        break;
+        case 11025:
+        case 12000:
+        case 22050:
+        case 24000:
+        case 32000:
+        case 44100:
+        case 48000:
+            this->spec.freq = this->spec.freq;
+            break;
+        default: 
+            this->spec.freq = 48000;
+            break;
     }
 
     this->spec.samples = 512;
@@ -67,8 +71,8 @@ static int PS2AUDIO_OpenDevice(_THIS, const char *devname)
 
     SDL_CalculateAudioSpec(&this->spec);
 
-    format.bits = this->spec.format == AUDIO_S8 ? 8 : 16;
-    format.freq = this->spec.freq;
+    format.bits     = this->spec.format == AUDIO_S8 ? 8 : 16;
+    format.freq     = this->spec.freq;
     format.channels = this->spec.channels;
 
     this->hidden->channel = audsrv_set_format(&format);
@@ -87,7 +91,7 @@ static int PS2AUDIO_OpenDevice(_THIS, const char *devname)
        be a multiple of 64 bytes.  Our sample count is already a multiple of
        64, so spec->size should be a multiple of 64 as well. */
     mixlen = this->spec.size * NUM_BUFFERS;
-    this->hidden->rawbuf = (Uint8 *)memalign(64, mixlen);
+    this->hidden->rawbuf = (Uint8 *) memalign(64, mixlen);
     if (this->hidden->rawbuf == NULL) {
         return SDL_SetError("Couldn't allocate mixing buffer");
     }
@@ -150,11 +154,10 @@ static void PS2AUDIO_Deinitialize(void)
     deinit_audio_driver();
 }
 
-static SDL_bool PS2AUDIO_Init(SDL_AudioDriverImpl *impl)
+static SDL_bool PS2AUDIO_Init(SDL_AudioDriverImpl * impl)
 {
-    if (init_audio_driver() < 0) {
+    if(init_audio_driver() < 0)
         return SDL_FALSE;
-    }
 
     /* Set the function pointers */
     impl->OpenDevice = PS2AUDIO_OpenDevice;
@@ -165,9 +168,11 @@ static SDL_bool PS2AUDIO_Init(SDL_AudioDriverImpl *impl)
     impl->ThreadInit = PS2AUDIO_ThreadInit;
     impl->Deinitialize = PS2AUDIO_Deinitialize;
     impl->OnlyHasDefaultOutputDevice = SDL_TRUE;
-    return SDL_TRUE; /* this audio target is available. */
+    return SDL_TRUE;   /* this audio target is available. */
 }
 
 AudioBootStrap PS2AUDIO_bootstrap = {
     "ps2", "PS2 audio driver", PS2AUDIO_Init, SDL_FALSE
 };
+
+/* vi: set ts=4 sw=4 expandtab: */

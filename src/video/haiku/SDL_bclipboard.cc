@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_DRIVER_HAIKU
 
@@ -28,6 +28,7 @@
 #include <TypeConstants.h>
 
 #include "SDL_BWin.h"
+#include "SDL_timer.h"
 #include "../SDL_sysvideo.h"
 
 #ifdef __cplusplus
@@ -36,12 +37,12 @@ extern "C" {
 
 int HAIKU_SetClipboardText(_THIS, const char *text) {
     BMessage *clip = NULL;
-    if (be_clipboard->Lock()) {
+    if(be_clipboard->Lock()) {
         be_clipboard->Clear();
-        if ((clip = be_clipboard->Data())) {
+        if((clip = be_clipboard->Data())) {
             /* Presumably the string of characters is ascii-format */
             ssize_t asciiLength = 0;
-            for (; text[asciiLength] != 0; ++asciiLength) {}
+            for(; text[asciiLength] != 0; ++asciiLength) {}
             clip->AddData("text/plain", B_MIME_TYPE, text, asciiLength);
             be_clipboard->Commit();
         }
@@ -55,8 +56,8 @@ char *HAIKU_GetClipboardText(_THIS) {
     const char *text = NULL;    
     ssize_t length;
     char *result;
-    if (be_clipboard->Lock()) {
-        if ((clip = be_clipboard->Data())) {
+    if(be_clipboard->Lock()) {
+        if((clip = be_clipboard->Data())) {
             /* Presumably the string of characters is ascii-format */
             clip->FindData("text/plain", B_MIME_TYPE, (const void**)&text,
                 &length);
@@ -64,7 +65,7 @@ char *HAIKU_GetClipboardText(_THIS) {
         be_clipboard->Unlock();
     } 
     
-    if (text == NULL) {
+    if (!text) {
         result = SDL_strdup("");
     } else {
         /* Copy the data and pass on to SDL */
@@ -90,3 +91,5 @@ SDL_bool HAIKU_HasClipboardText(_THIS) {
 #endif
 
 #endif /* SDL_VIDEO_DRIVER_HAIKU */
+
+/* vi: set ts=4 sw=4 expandtab: */

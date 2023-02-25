@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../SDL_internal.h"
 
 /* Get the name of the audio device we use for output */
 
@@ -29,23 +29,25 @@
 #include <sys/stat.h>
 #include <unistd.h> /* For close() */
 
+#include "SDL_stdinc.h"
 #include "SDL_audiodev_c.h"
 
-#ifndef SDL_PATH_DEV_DSP
+#ifndef _PATH_DEV_DSP
 #if defined(__NETBSD__) || defined(__OPENBSD__)
-#define SDL_PATH_DEV_DSP "/dev/audio"
+#define _PATH_DEV_DSP  "/dev/audio"
 #else
-#define SDL_PATH_DEV_DSP "/dev/dsp"
+#define _PATH_DEV_DSP  "/dev/dsp"
 #endif
 #endif
-#ifndef SDL_PATH_DEV_DSP24
-#define SDL_PATH_DEV_DSP24 "/dev/sound/dsp"
+#ifndef _PATH_DEV_DSP24
+#define _PATH_DEV_DSP24 "/dev/sound/dsp"
 #endif
-#ifndef SDL_PATH_DEV_AUDIO
-#define SDL_PATH_DEV_AUDIO "/dev/audio"
+#ifndef _PATH_DEV_AUDIO
+#define _PATH_DEV_AUDIO "/dev/audio"
 #endif
 
-static void test_device(const int iscapture, const char *fname, int flags, int (*test)(int fd))
+static void
+test_device(const int iscapture, const char *fname, int flags, int (*test) (int fd))
 {
     struct stat sb;
     if ((stat(fname, &sb) == 0) && (S_ISCHR(sb.st_mode))) {
@@ -63,43 +65,43 @@ static void test_device(const int iscapture, const char *fname, int flags, int (
                  * information,  making this information inaccessible at
                  * enumeration time
                  */
-                SDL_AddAudioDevice(iscapture, fname, NULL, (void *)(uintptr_t)dummyhandle);
+                SDL_AddAudioDevice(iscapture, fname, NULL, (void *) (uintptr_t) dummyhandle);
             }
         }
     }
 }
 
-static int test_stub(int fd)
+static int
+test_stub(int fd)
 {
     return 1;
 }
 
-static void SDL_EnumUnixAudioDevices_Internal(const int iscapture, const int classic, int (*test)(int))
+static void
+SDL_EnumUnixAudioDevices_Internal(const int iscapture, const int classic, int (*test)(int))
 {
     const int flags = iscapture ? OPEN_FLAGS_INPUT : OPEN_FLAGS_OUTPUT;
     const char *audiodev;
     char audiopath[1024];
 
-    if (test == NULL) {
+    if (test == NULL)
         test = test_stub;
-    }
 
     /* Figure out what our audio device is */
-    audiodev = SDL_getenv("SDL_PATH_DSP");
-    if (audiodev == NULL) {
-        audiodev = SDL_getenv("AUDIODEV");
-    }
-    if (audiodev == NULL) {
+    if (((audiodev = SDL_getenv("SDL_PATH_DSP")) == NULL) &&
+        ((audiodev = SDL_getenv("AUDIODEV")) == NULL)) {
         if (classic) {
-            audiodev = SDL_PATH_DEV_AUDIO;
+            audiodev = _PATH_DEV_AUDIO;
         } else {
             struct stat sb;
 
             /* Added support for /dev/sound/\* in Linux 2.4 */
-            if (((stat("/dev/sound", &sb) == 0) && S_ISDIR(sb.st_mode)) && ((stat(SDL_PATH_DEV_DSP24, &sb) == 0) && S_ISCHR(sb.st_mode))) {
-                audiodev = SDL_PATH_DEV_DSP24;
+            if (((stat("/dev/sound", &sb) == 0) && S_ISDIR(sb.st_mode))
+                && ((stat(_PATH_DEV_DSP24, &sb) == 0)
+                    && S_ISCHR(sb.st_mode))) {
+                audiodev = _PATH_DEV_DSP24;
             } else {
-                audiodev = SDL_PATH_DEV_DSP;
+                audiodev = _PATH_DEV_DSP;
             }
         }
     }
@@ -108,18 +110,21 @@ static void SDL_EnumUnixAudioDevices_Internal(const int iscapture, const int cla
     if (SDL_strlen(audiodev) < (sizeof(audiopath) - 3)) {
         int instance = 0;
         while (instance <= 64) {
-            (void)SDL_snprintf(audiopath, SDL_arraysize(audiopath),
-                               "%s%d", audiodev, instance);
+            SDL_snprintf(audiopath, SDL_arraysize(audiopath),
+                         "%s%d", audiodev, instance);
             instance++;
             test_device(iscapture, audiopath, flags, test);
         }
     }
 }
 
-void SDL_EnumUnixAudioDevices(const int classic, int (*test)(int))
+void
+SDL_EnumUnixAudioDevices(const int classic, int (*test)(int))
 {
     SDL_EnumUnixAudioDevices_Internal(SDL_TRUE, classic, test);
     SDL_EnumUnixAudioDevices_Internal(SDL_FALSE, classic, test);
 }
 
 #endif /* Audio driver selection */
+
+/* vi: set ts=4 sw=4 expandtab: */

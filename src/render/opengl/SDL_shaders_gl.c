@@ -18,11 +18,13 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if SDL_VIDEO_RENDER_OGL && !SDL_RENDER_DISABLED
 
-#include <SDL3/SDL_opengl.h>
+#include "SDL_stdinc.h"
+#include "SDL_opengl.h"
+#include "SDL_video.h"
 #include "SDL_shaders_gl.h"
 
 /* OpenGL shader implementation */
@@ -58,8 +60,6 @@ struct GL_ShaderContext
 
     GL_ShaderData shaders[NUM_SHADERS];
 };
-
-/* *INDENT-OFF* */ /* clang-format off */
 
 #define COLOR_VERTEX_SHADER                                     \
 "varying vec4 v_color;\n"                                       \
@@ -235,7 +235,8 @@ struct GL_ShaderContext
  * NOTE: Always use sampler2D, etc here. We'll #define them to the
  *  texture_rectangle versions if we choose to use that extension.
  */
-static const char *shader_source[NUM_SHADERS][2] = {
+static const char *shader_source[NUM_SHADERS][2] =
+{
     /* SHADER_NONE */
     { NULL, NULL },
 
@@ -386,9 +387,8 @@ static const char *shader_source[NUM_SHADERS][2] = {
 #endif /* SDL_HAVE_YUV */
 };
 
-/* *INDENT-ON* */ /* clang-format on */
-
-static SDL_bool CompileShader(GL_ShaderContext *ctx, GLhandleARB shader, const char *defines, const char *source)
+static SDL_bool
+CompileShader(GL_ShaderContext *ctx, GLhandleARB shader, const char *defines, const char *source)
 {
     GLint status;
     const char *sources[2];
@@ -405,13 +405,13 @@ static SDL_bool CompileShader(GL_ShaderContext *ctx, GLhandleARB shader, const c
         char *info;
 
         ctx->glGetObjectParameterivARB(shader, GL_OBJECT_INFO_LOG_LENGTH_ARB, &length);
-        info = SDL_small_alloc(char, length + 1, &isstack);
+        info = SDL_small_alloc(char, length+1, &isstack);
         ctx->glGetInfoLogARB(shader, length, NULL, info);
         SDL_LogError(SDL_LOG_CATEGORY_RENDER,
-                     "Failed to compile shader:\n%s%s\n%s", defines, source, info);
+            "Failed to compile shader:\n%s%s\n%s", defines, source, info);
 #ifdef DEBUG_SHADERS
         fprintf(stderr,
-                "Failed to compile shader:\n%s%s\n%s", defines, source, info);
+            "Failed to compile shader:\n%s%s\n%s", defines, source, info);
 #endif
         SDL_small_free(info, isstack);
 
@@ -421,7 +421,8 @@ static SDL_bool CompileShader(GL_ShaderContext *ctx, GLhandleARB shader, const c
     }
 }
 
-static SDL_bool CompileShaderProgram(GL_ShaderContext *ctx, int index, GL_ShaderData *data)
+static SDL_bool
+CompileShaderProgram(GL_ShaderContext *ctx, int index, GL_ShaderData *data)
 {
     const int num_tmus_bound = 4;
     const char *vert_defines = "";
@@ -438,12 +439,12 @@ static SDL_bool CompileShaderProgram(GL_ShaderContext *ctx, int index, GL_Shader
     /* Make sure we use the correct sampler type for our texture type */
     if (ctx->GL_ARB_texture_rectangle_supported) {
         frag_defines =
-            "#define sampler2D sampler2DRect\n"
-            "#define texture2D texture2DRect\n"
-            "#define UVCoordScale 0.5\n";
+"#define sampler2D sampler2DRect\n"
+"#define texture2D texture2DRect\n"
+"#define UVCoordScale 0.5\n";
     } else {
-        frag_defines =
-            "#define UVCoordScale 1.0\n";
+        frag_defines = 
+"#define UVCoordScale 1.0\n";
     }
 
     /* Create one program object to rule them all */
@@ -470,7 +471,7 @@ static SDL_bool CompileShaderProgram(GL_ShaderContext *ctx, int index, GL_Shader
     ctx->glUseProgramObjectARB(data->program);
     for (i = 0; i < num_tmus_bound; ++i) {
         char tex_name[10];
-        (void)SDL_snprintf(tex_name, SDL_arraysize(tex_name), "tex%d", i);
+        SDL_snprintf(tex_name, SDL_arraysize(tex_name), "tex%d", i);
         location = ctx->glGetUniformLocationARB(data->program, tex_name);
         if (location >= 0) {
             ctx->glUniform1iARB(location, i);
@@ -478,10 +479,11 @@ static SDL_bool CompileShaderProgram(GL_ShaderContext *ctx, int index, GL_Shader
     }
     ctx->glUseProgramObjectARB(0);
 
-    return ctx->glGetError() == GL_NO_ERROR;
+    return (ctx->glGetError() == GL_NO_ERROR);
 }
 
-static void DestroyShaderProgram(GL_ShaderContext *ctx, GL_ShaderData *data)
+static void
+DestroyShaderProgram(GL_ShaderContext *ctx, GL_ShaderData *data)
 {
     ctx->glDeleteObjectARB(data->vert_shader);
     ctx->glDeleteObjectARB(data->frag_shader);
@@ -496,7 +498,7 @@ GL_CreateShaderContext(void)
     int i;
 
     ctx = (GL_ShaderContext *)SDL_calloc(1, sizeof(*ctx));
-    if (ctx == NULL) {
+    if (!ctx) {
         return NULL;
     }
 
@@ -512,20 +514,20 @@ GL_CreateShaderContext(void)
         SDL_GL_ExtensionSupported("GL_ARB_shading_language_100") &&
         SDL_GL_ExtensionSupported("GL_ARB_vertex_shader") &&
         SDL_GL_ExtensionSupported("GL_ARB_fragment_shader")) {
-        ctx->glGetError = (GLenum(*)(void))SDL_GL_GetProcAddress("glGetError");
-        ctx->glAttachObjectARB = (PFNGLATTACHOBJECTARBPROC)SDL_GL_GetProcAddress("glAttachObjectARB");
-        ctx->glCompileShaderARB = (PFNGLCOMPILESHADERARBPROC)SDL_GL_GetProcAddress("glCompileShaderARB");
-        ctx->glCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC)SDL_GL_GetProcAddress("glCreateProgramObjectARB");
-        ctx->glCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC)SDL_GL_GetProcAddress("glCreateShaderObjectARB");
-        ctx->glDeleteObjectARB = (PFNGLDELETEOBJECTARBPROC)SDL_GL_GetProcAddress("glDeleteObjectARB");
-        ctx->glGetInfoLogARB = (PFNGLGETINFOLOGARBPROC)SDL_GL_GetProcAddress("glGetInfoLogARB");
-        ctx->glGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC)SDL_GL_GetProcAddress("glGetObjectParameterivARB");
-        ctx->glGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC)SDL_GL_GetProcAddress("glGetUniformLocationARB");
-        ctx->glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC)SDL_GL_GetProcAddress("glLinkProgramARB");
-        ctx->glShaderSourceARB = (PFNGLSHADERSOURCEARBPROC)SDL_GL_GetProcAddress("glShaderSourceARB");
-        ctx->glUniform1iARB = (PFNGLUNIFORM1IARBPROC)SDL_GL_GetProcAddress("glUniform1iARB");
-        ctx->glUniform1fARB = (PFNGLUNIFORM1FARBPROC)SDL_GL_GetProcAddress("glUniform1fARB");
-        ctx->glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC)SDL_GL_GetProcAddress("glUseProgramObjectARB");
+        ctx->glGetError = (GLenum (*)(void)) SDL_GL_GetProcAddress("glGetError");
+        ctx->glAttachObjectARB = (PFNGLATTACHOBJECTARBPROC) SDL_GL_GetProcAddress("glAttachObjectARB");
+        ctx->glCompileShaderARB = (PFNGLCOMPILESHADERARBPROC) SDL_GL_GetProcAddress("glCompileShaderARB");
+        ctx->glCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC) SDL_GL_GetProcAddress("glCreateProgramObjectARB");
+        ctx->glCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC) SDL_GL_GetProcAddress("glCreateShaderObjectARB");
+        ctx->glDeleteObjectARB = (PFNGLDELETEOBJECTARBPROC) SDL_GL_GetProcAddress("glDeleteObjectARB");
+        ctx->glGetInfoLogARB = (PFNGLGETINFOLOGARBPROC) SDL_GL_GetProcAddress("glGetInfoLogARB");
+        ctx->glGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC) SDL_GL_GetProcAddress("glGetObjectParameterivARB");
+        ctx->glGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC) SDL_GL_GetProcAddress("glGetUniformLocationARB");
+        ctx->glLinkProgramARB = (PFNGLLINKPROGRAMARBPROC) SDL_GL_GetProcAddress("glLinkProgramARB");
+        ctx->glShaderSourceARB = (PFNGLSHADERSOURCEARBPROC) SDL_GL_GetProcAddress("glShaderSourceARB");
+        ctx->glUniform1iARB = (PFNGLUNIFORM1IARBPROC) SDL_GL_GetProcAddress("glUniform1iARB");
+        ctx->glUniform1fARB = (PFNGLUNIFORM1FARBPROC) SDL_GL_GetProcAddress("glUniform1fARB");
+        ctx->glUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC) SDL_GL_GetProcAddress("glUseProgramObjectARB");
         if (ctx->glGetError &&
             ctx->glAttachObjectARB &&
             ctx->glCompileShaderARB &&
@@ -561,12 +563,14 @@ GL_CreateShaderContext(void)
     return ctx;
 }
 
-void GL_SelectShader(GL_ShaderContext *ctx, GL_Shader shader)
+void
+GL_SelectShader(GL_ShaderContext *ctx, GL_Shader shader)
 {
     ctx->glUseProgramObjectARB(ctx->shaders[shader].program);
 }
 
-void GL_DestroyShaderContext(GL_ShaderContext *ctx)
+void
+GL_DestroyShaderContext(GL_ShaderContext *ctx)
 {
     int i;
 
@@ -577,3 +581,5 @@ void GL_DestroyShaderContext(GL_ShaderContext *ctx)
 }
 
 #endif /* SDL_VIDEO_RENDER_OGL && !SDL_RENDER_DISABLED */
+
+/* vi: set ts=4 sw=4 expandtab: */
