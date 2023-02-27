@@ -13,6 +13,7 @@ pub fn build(b: *std.Build) void {
 
     lib.addIncludePath("include");
     lib.addCSourceFiles(&generic_src_files, &.{});
+    lib.defineCMacro("SDL_USE_BUILTIN_OPENGL_DEFINITIONS", "1");
     lib.linkLibC();
     switch (t.os.tag) {
         .windows => {
@@ -26,6 +27,8 @@ pub fn build(b: *std.Build) void {
             lib.linkSystemLibrary("ole32");
         },
         .macos => {
+            lib.addCSourceFiles(&darwin_src_files, &.{});
+            lib.addCSourceFiles(&objective_c_src_files, &.{"-fobjc-arc"});
             lib.linkFramework("OpenGL");
             lib.linkFramework("Metal");
             lib.linkFramework("CoreVideo");
@@ -167,6 +170,25 @@ const generic_src_files = [_][]const u8{
     "src/render/software/SDL_render_sw.c",
     "src/render/software/SDL_rotate.c",
     "src/render/software/SDL_triangle.c",
+
+    "src/audio/dummy/SDL_dummyaudio.c",
+
+    "src/joystick/hidapi/SDL_hidapi_combined.c",
+    "src/joystick/hidapi/SDL_hidapi_gamecube.c",
+    "src/joystick/hidapi/SDL_hidapi_luna.c",
+    "src/joystick/hidapi/SDL_hidapi_ps3.c",
+    "src/joystick/hidapi/SDL_hidapi_ps4.c",
+    "src/joystick/hidapi/SDL_hidapi_ps5.c",
+    "src/joystick/hidapi/SDL_hidapi_rumble.c",
+    "src/joystick/hidapi/SDL_hidapi_shield.c",
+    "src/joystick/hidapi/SDL_hidapi_stadia.c",
+    "src/joystick/hidapi/SDL_hidapi_steam.c",
+    "src/joystick/hidapi/SDL_hidapi_switch.c",
+    "src/joystick/hidapi/SDL_hidapi_wii.c",
+    "src/joystick/hidapi/SDL_hidapi_xbox360.c",
+    "src/joystick/hidapi/SDL_hidapi_xbox360w.c",
+    "src/joystick/hidapi/SDL_hidapi_xboxone.c",
+    "src/joystick/hidapi/SDL_hidapijoystick.c",
 };
 
 const windows_src_files = [_][]const u8{
@@ -187,23 +209,6 @@ const windows_src_files = [_][]const u8{
     //"src/joystick/windows/SDL_windows_gaming_input.c",
     "src/joystick/windows/SDL_windowsjoystick.c",
     "src/joystick/windows/SDL_xinputjoystick.c",
-
-    "src/joystick/hidapi/SDL_hidapi_combined.c",
-    "src/joystick/hidapi/SDL_hidapi_gamecube.c",
-    "src/joystick/hidapi/SDL_hidapi_luna.c",
-    "src/joystick/hidapi/SDL_hidapi_ps3.c",
-    "src/joystick/hidapi/SDL_hidapi_ps4.c",
-    "src/joystick/hidapi/SDL_hidapi_ps5.c",
-    "src/joystick/hidapi/SDL_hidapi_rumble.c",
-    "src/joystick/hidapi/SDL_hidapi_shield.c",
-    "src/joystick/hidapi/SDL_hidapi_stadia.c",
-    "src/joystick/hidapi/SDL_hidapi_steam.c",
-    "src/joystick/hidapi/SDL_hidapi_switch.c",
-    "src/joystick/hidapi/SDL_hidapi_wii.c",
-    "src/joystick/hidapi/SDL_hidapi_xbox360.c",
-    "src/joystick/hidapi/SDL_hidapi_xbox360w.c",
-    "src/joystick/hidapi/SDL_hidapi_xboxone.c",
-    "src/joystick/hidapi/SDL_hidapijoystick.c",
 
     "src/loadso/windows/SDL_sysloadso.c",
     "src/locale/windows/SDL_syslocale.c",
@@ -231,12 +236,7 @@ const windows_src_files = [_][]const u8{
     "src/thread/windows/SDL_syssem.c",
     "src/thread/windows/SDL_systhread.c",
     "src/thread/windows/SDL_systls.c",
-
     "src/thread/generic/SDL_syscond.c",
-    "src/thread/generic/SDL_sysmutex.c",
-    "src/thread/generic/SDL_syssem.c",
-    "src/thread/generic/SDL_systhread.c",
-    "src/thread/generic/SDL_systls.c",
 
     "src/render/direct3d/SDL_render_d3d.c",
     "src/render/direct3d/SDL_shaders_d3d.c",
@@ -250,7 +250,6 @@ const windows_src_files = [_][]const u8{
     "src/audio/wasapi/SDL_wasapi_win32.c",
     "src/audio/winmm/SDL_winmm.c",
     "src/audio/disk/SDL_diskaudio.c",
-    "src/audio/dummy/SDL_dummyaudio.c",
 
     "src/render/opengl/SDL_render_gl.c",
     "src/render/opengl/SDL_shaders_gl.c",
@@ -312,7 +311,80 @@ const linux_src_files = [_][]const u8{
     "src/audio/pulseaudio/SDL_pulseaudio.c",
 };
 
+const darwin_src_files = [_][]const u8{
+    "src/haptic/darwin/SDL_syshaptic.c",
+    "src/joystick/darwin/SDL_iokitjoystick.c",
+    "src/power/macosx/SDL_syspower.c",
+    "src/timer/unix/SDL_systimer.c",
+    "src/loadso/dlopen/SDL_sysloadso.c",
+    "src/audio/disk/SDL_diskaudio.c",
+    "src/render/opengl/SDL_render_gl.c",
+    "src/render/opengl/SDL_shaders_gl.c",
+    "src/render/opengles/SDL_render_gles.c",
+    "src/render/opengles2/SDL_render_gles2.c",
+    "src/render/opengles2/SDL_shaders_gles2.c",
+    "src/sensor/dummy/SDL_dummysensor.c",
+
+    "src/thread/pthread/SDL_syscond.c",
+    "src/thread/pthread/SDL_sysmutex.c",
+    "src/thread/pthread/SDL_syssem.c",
+    "src/thread/pthread/SDL_systhread.c",
+    "src/thread/pthread/SDL_systls.c",
+};
+
+const objective_c_src_files = [_][]const u8{
+    "src/audio/coreaudio/SDL_coreaudio.m",
+    "src/file/cocoa/SDL_rwopsbundlesupport.m",
+    "src/filesystem/cocoa/SDL_sysfilesystem.m",
+    //"src/hidapi/testgui/mac_support_cocoa.m",
+    // This appears to be for SDL3 only.
+    //"src/joystick/apple/SDL_mfijoystick.m",
+    "src/locale/macosx/SDL_syslocale.m",
+    "src/misc/macosx/SDL_sysurl.m",
+    "src/power/uikit/SDL_syspower.m",
+    "src/render/metal/SDL_render_metal.m",
+    "src/sensor/coremotion/SDL_coremotionsensor.m",
+    "src/video/cocoa/SDL_cocoaclipboard.m",
+    "src/video/cocoa/SDL_cocoaevents.m",
+    "src/video/cocoa/SDL_cocoakeyboard.m",
+    "src/video/cocoa/SDL_cocoamessagebox.m",
+    "src/video/cocoa/SDL_cocoametalview.m",
+    "src/video/cocoa/SDL_cocoamodes.m",
+    "src/video/cocoa/SDL_cocoamouse.m",
+    "src/video/cocoa/SDL_cocoaopengl.m",
+    "src/video/cocoa/SDL_cocoaopengles.m",
+    "src/video/cocoa/SDL_cocoashape.m",
+    "src/video/cocoa/SDL_cocoavideo.m",
+    "src/video/cocoa/SDL_cocoavulkan.m",
+    "src/video/cocoa/SDL_cocoawindow.m",
+    "src/video/uikit/SDL_uikitappdelegate.m",
+    "src/video/uikit/SDL_uikitclipboard.m",
+    "src/video/uikit/SDL_uikitevents.m",
+    "src/video/uikit/SDL_uikitmessagebox.m",
+    "src/video/uikit/SDL_uikitmetalview.m",
+    "src/video/uikit/SDL_uikitmodes.m",
+    "src/video/uikit/SDL_uikitopengles.m",
+    "src/video/uikit/SDL_uikitopenglview.m",
+    "src/video/uikit/SDL_uikitvideo.m",
+    "src/video/uikit/SDL_uikitview.m",
+    "src/video/uikit/SDL_uikitviewcontroller.m",
+    "src/video/uikit/SDL_uikitvulkan.m",
+    "src/video/uikit/SDL_uikitwindow.m",
+};
+
+const ios_src_files = [_][]const u8{
+    "src/hidapi/ios/hid.m",
+    "src/misc/ios/SDL_sysurl.m",
+    "src/joystick/iphoneos/SDL_mfijoystick.m",
+};
+
 const unknown_src_files = [_][]const u8{
+    "src/thread/generic/SDL_syscond.c",
+    "src/thread/generic/SDL_sysmutex.c",
+    "src/thread/generic/SDL_syssem.c",
+    "src/thread/generic/SDL_systhread.c",
+    "src/thread/generic/SDL_systls.c",
+
     "src/audio/aaudio/SDL_aaudio.c",
     "src/audio/android/SDL_androidaudio.c",
     "src/audio/arts/SDL_artsaudio.c",
@@ -362,7 +434,6 @@ const unknown_src_files = [_][]const u8{
     "src/filesystem/vita/SDL_sysfilesystem.c",
 
     "src/haptic/android/SDL_syshaptic.c",
-    "src/haptic/darwin/SDL_syshaptic.c",
     "src/haptic/dummy/SDL_syshaptic.c",
 
     "src/hidapi/libusb/hid.c",
@@ -370,7 +441,6 @@ const unknown_src_files = [_][]const u8{
 
     "src/joystick/android/SDL_sysjoystick.c",
     "src/joystick/bsd/SDL_bsdjoystick.c",
-    "src/joystick/darwin/SDL_iokitjoystick.c",
     "src/joystick/dummy/SDL_sysjoystick.c",
     "src/joystick/emscripten/SDL_sysjoystick.c",
     "src/joystick/n3ds/SDL_sysjoystick.c",
@@ -380,7 +450,6 @@ const unknown_src_files = [_][]const u8{
     "src/joystick/steam/SDL_steamcontroller.c",
     "src/joystick/vita/SDL_sysjoystick.c",
 
-    "src/loadso/dlopen/SDL_sysloadso.c",
     "src/loadso/dummy/SDL_sysloadso.c",
     "src/loadso/os2/SDL_sysloadso.c",
 
@@ -411,13 +480,11 @@ const unknown_src_files = [_][]const u8{
     "src/power/android/SDL_syspower.c",
     "src/power/emscripten/SDL_syspower.c",
     "src/power/haiku/SDL_syspower.c",
-    "src/power/macosx/SDL_syspower.c",
     "src/power/n3ds/SDL_syspower.c",
     "src/power/psp/SDL_syspower.c",
     "src/power/vita/SDL_syspower.c",
 
     "src/sensor/android/SDL_androidsensor.c",
-    "src/sensor/dummy/SDL_dummysensor.c",
     "src/sensor/n3ds/SDL_n3dssensor.c",
     "src/sensor/vita/SDL_vitasensor.c",
 
@@ -452,11 +519,6 @@ const unknown_src_files = [_][]const u8{
     "src/thread/psp/SDL_sysmutex.c",
     "src/thread/psp/SDL_syssem.c",
     "src/thread/psp/SDL_systhread.c",
-    "src/thread/pthread/SDL_syscond.c",
-    "src/thread/pthread/SDL_sysmutex.c",
-    "src/thread/pthread/SDL_syssem.c",
-    "src/thread/pthread/SDL_systhread.c",
-    "src/thread/pthread/SDL_systls.c",
     "src/thread/vita/SDL_syscond.c",
     "src/thread/vita/SDL_sysmutex.c",
     "src/thread/vita/SDL_syssem.c",
@@ -468,7 +530,6 @@ const unknown_src_files = [_][]const u8{
     "src/timer/os2/SDL_systimer.c",
     "src/timer/ps2/SDL_systimer.c",
     "src/timer/psp/SDL_systimer.c",
-    "src/timer/unix/SDL_systimer.c",
     "src/timer/vita/SDL_systimer.c",
 
     "src/video/android/SDL_androidclipboard.c",
