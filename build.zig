@@ -50,8 +50,8 @@ pub fn build(b: *std.Build) void {
             lib.installConfigHeader(config_header, .{});
         },
     }
-    lib.install();
     lib.installHeadersDirectory("include", "SDL2");
+    b.installArtifact(lib);
 }
 
 const generic_src_files = [_][]const u8{
