@@ -1,5 +1,13 @@
 .{
     .name = "SDL",
-    .version = "2.26.3-2",
+    .version = "2.26.3-3",
     .dependencies = .{},
+    .paths = .{
+        "LICENSE.txt",
+        "README.md",
+        "build.zig",
+        "build.zig.zon",
+        "include",
+        "src",
+    },
 }
