@@ -12,12 +12,12 @@ pub fn build(b: *std.Build) void {
     const t = lib.target_info.target;
 
     lib.addIncludePath(.{ .path = "include" });
-    lib.addCSourceFiles(&generic_src_files, &.{});
+    lib.addCSourceFiles(.{ .files = &generic_src_files });
     lib.defineCMacro("SDL_USE_BUILTIN_OPENGL_DEFINITIONS", "1");
     lib.linkLibC();
     switch (t.os.tag) {
         .windows => {
-            lib.addCSourceFiles(&windows_src_files, &.{});
+            lib.addCSourceFiles(.{ .files = &windows_src_files });
             lib.linkSystemLibrary("setupapi");
             lib.linkSystemLibrary("winmm");
             lib.linkSystemLibrary("gdi32");
@@ -27,8 +27,11 @@ pub fn build(b: *std.Build) void {
             lib.linkSystemLibrary("ole32");
         },
         .macos => {
-            lib.addCSourceFiles(&darwin_src_files, &.{});
-            lib.addCSourceFiles(&objective_c_src_files, &.{"-fobjc-arc"});
+            lib.addCSourceFiles(.{ .files = &darwin_src_files });
+            lib.addCSourceFiles(.{
+                .files = &objective_c_src_files,
+                .flags = &.{"-fobjc-arc"},
+            });
             lib.linkFramework("OpenGL");
             lib.linkFramework("Metal");
             lib.linkFramework("CoreVideo");
