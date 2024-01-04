@@ -1,6 +1,6 @@
 .{
     .name = "SDL",
-    .version = "2.26.3-4",
+    .version = "2.26.3-5",
     .dependencies = .{},
     .paths = .{
         "LICENSE.txt",

@@ -3,13 +3,13 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const t = target.result;
 
     const lib = b.addStaticLibrary(.{
         .name = "SDL2",
         .target = target,
         .optimize = optimize,
     });
-    const t = lib.target_info.target;
 
     lib.addIncludePath(.{ .path = "include" });
     lib.addCSourceFiles(.{ .files = &generic_src_files });
