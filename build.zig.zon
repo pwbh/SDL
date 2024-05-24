@@ -1,6 +1,7 @@
 .{
     .name = "SDL",
-    .version = "2.26.3-5",
+    .minimum_zig_version = "0.12.0",
+    .version = "2.26.3-6",
     .dependencies = .{},
     .paths = .{
         "LICENSE.txt",
