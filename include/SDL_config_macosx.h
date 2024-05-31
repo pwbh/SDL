@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -165,8 +165,7 @@
 
 /* The MFI controller support requires ARC Objective C runtime */
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1080 && !defined(__i386__)
-// This appears to require SDL3
-// #define SDL_JOYSTICK_MFI 1
+#define SDL_JOYSTICK_MFI 1
 #endif
 
 /* Enable the dummy sensor driver */

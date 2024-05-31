@@ -14,6 +14,7 @@ pub fn build(b: *std.Build) void {
     lib.addIncludePath(b.path("include"));
     lib.addCSourceFiles(.{ .files = &generic_src_files });
     lib.defineCMacro("SDL_USE_BUILTIN_OPENGL_DEFINITIONS", "1");
+    // SDL_JOYSTICK_MFI
     lib.linkLibC();
     switch (t.os.tag) {
         .windows => {
@@ -32,6 +33,8 @@ pub fn build(b: *std.Build) void {
                 .files = &objective_c_src_files,
                 .flags = &.{"-fobjc-arc"},
             });
+            lib.linkFramework("GameController");
+            lib.linkFramework("CoreHaptics");
             lib.linkFramework("OpenGL");
             lib.linkFramework("Metal");
             lib.linkFramework("CoreVideo");
@@ -93,12 +96,11 @@ const generic_src_files = [_][]const u8{
     "src/file/SDL_rwops.c",
     "src/haptic/SDL_haptic.c",
     "src/hidapi/SDL_hidapi.c",
-
     "src/joystick/SDL_gamecontroller.c",
     "src/joystick/SDL_joystick.c",
     "src/joystick/controller_type.c",
     "src/joystick/virtual/SDL_virtualjoystick.c",
-
+    "src/joystick/SDL_steam_virtual_gamepad.c",
     "src/libm/e_atan2.c",
     "src/libm/e_exp.c",
     "src/libm/e_fmod.c",
@@ -159,12 +161,10 @@ const generic_src_files = [_][]const u8{
     "src/video/SDL_video.c",
     "src/video/SDL_vulkan_utils.c",
     "src/video/SDL_yuv.c",
-    "src/video/yuv2rgb/yuv_rgb.c",
-
+    "src/video/yuv2rgb/yuv_rgb_std.c",
     "src/video/dummy/SDL_nullevents.c",
     "src/video/dummy/SDL_nullframebuffer.c",
     "src/video/dummy/SDL_nullvideo.c",
-
     "src/render/software/SDL_blendfillrect.c",
     "src/render/software/SDL_blendline.c",
     "src/render/software/SDL_blendpoint.c",
@@ -173,9 +173,7 @@ const generic_src_files = [_][]const u8{
     "src/render/software/SDL_render_sw.c",
     "src/render/software/SDL_rotate.c",
     "src/render/software/SDL_triangle.c",
-
     "src/audio/dummy/SDL_dummyaudio.c",
-
     "src/joystick/hidapi/SDL_hidapi_combined.c",
     "src/joystick/hidapi/SDL_hidapi_gamecube.c",
     "src/joystick/hidapi/SDL_hidapi_luna.c",
@@ -186,6 +184,7 @@ const generic_src_files = [_][]const u8{
     "src/joystick/hidapi/SDL_hidapi_shield.c",
     "src/joystick/hidapi/SDL_hidapi_stadia.c",
     "src/joystick/hidapi/SDL_hidapi_steam.c",
+    "src/joystick/hidapi/SDL_hidapi_steamdeck.c",
     "src/joystick/hidapi/SDL_hidapi_switch.c",
     "src/joystick/hidapi/SDL_hidapi_wii.c",
     "src/joystick/hidapi/SDL_hidapi_xbox360.c",
@@ -328,6 +327,8 @@ const darwin_src_files = [_][]const u8{
     "src/render/opengles2/SDL_shaders_gles2.c",
     "src/sensor/dummy/SDL_dummysensor.c",
 
+    "src/hidapi/mac/hid.c",
+
     "src/thread/pthread/SDL_syscond.c",
     "src/thread/pthread/SDL_sysmutex.c",
     "src/thread/pthread/SDL_syssem.c",
@@ -341,7 +342,8 @@ const objective_c_src_files = [_][]const u8{
     "src/filesystem/cocoa/SDL_sysfilesystem.m",
     //"src/hidapi/testgui/mac_support_cocoa.m",
     // This appears to be for SDL3 only.
-    //"src/joystick/apple/SDL_mfijoystick.m",
+    // "src/joystick/apple/SDL_mfijoystick.m",
+    "src/joystick/iphoneos/SDL_mfijoystick.m",
     "src/locale/macosx/SDL_syslocale.m",
     "src/misc/macosx/SDL_sysurl.m",
     "src/power/uikit/SDL_syspower.m",
@@ -378,7 +380,6 @@ const objective_c_src_files = [_][]const u8{
 const ios_src_files = [_][]const u8{
     "src/hidapi/ios/hid.m",
     "src/misc/ios/SDL_sysurl.m",
-    "src/joystick/iphoneos/SDL_mfijoystick.m",
 };
 
 const unknown_src_files = [_][]const u8{
@@ -440,7 +441,6 @@ const unknown_src_files = [_][]const u8{
     "src/haptic/dummy/SDL_syshaptic.c",
 
     "src/hidapi/libusb/hid.c",
-    "src/hidapi/mac/hid.c",
 
     "src/joystick/android/SDL_sysjoystick.c",
     "src/joystick/bsd/SDL_bsdjoystick.c",
