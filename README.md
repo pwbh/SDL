@@ -8,7 +8,7 @@ Unnecessary files have been deleted, and the build system has been replaced with
 We can easily fetch this library using `zig fetch`, for example:
 
 ```bash
-zig fetch --save https://github.com/pwbh/SDL/archive/refs/tags/release-2.30.3.zip
+zig fetch --save https://github.com/pwbh/SDL/archive/refs/tags/release-2.30.3.tar.gz
 ```
 
 If another SDL version needed, we can use a different tag instead of the `release-2.30.3` in the url we fetch.
