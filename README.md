@@ -49,7 +49,6 @@ Following codesnippet should create a window and exit after 5 seconds.
 const c = @cImport({
     @cInclude("SDL2/SDL.h");
 });
-const assert = @import("std").debug.assert;
 
 pub fn main() !void {
     if (c.SDL_Init(c.SDL_INIT_VIDEO) != 0) {
