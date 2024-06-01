@@ -11,7 +11,7 @@ We can easily fetch this library using `zig fetch`, for example:
 zig fetch --save https://github.com/pwbh/SDL/archive/refs/tags/release-2.30.3.zip
 ```
 
-If another SDL version needed, we can use a different tag instead of the `release-20.3.3` in the url we fetch.
+If another SDL version needed, we can use a different tag instead of the `release-2.30.3` in the url we fetch.
 
 In your `build.zig`:
 
