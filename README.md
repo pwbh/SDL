@@ -42,6 +42,7 @@ b.installArtifact(exe);
 ## Test it out
 
 Now lets test it out and see if it creates a window.
+
 Following codesnippet should create a window and exit after 5 seconds.
 
 ```zig
