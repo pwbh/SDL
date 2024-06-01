@@ -16,25 +16,25 @@ If another SDL version needed, we can use a different tag instead of the `releas
 In your `build.zig`:
 
 ```zig
-  const exe = b.addExecutable(.{
-        .name = "my-project",
-        .root_source_file = b.path("src/main.zig"),
+const exe = b.addExecutable(.{
+      .name = "my-project",
+      .root_source_file = b.path("src/main.zig"),
+      .target = target,
+      .optimize = optimize,
+  });
+
+if (target.result.os.tag == .linux) {
+    // The SDL package doesn't work for Linux yet, so we rely on system
+    // packages for now.
+    exe.linkSystemLibrary("SDL2");
+    exe.linkLibC();
+} else {
+    const sdl_dep = b.dependency("SDL", .{
+        .optimize = .ReleaseFast,
         .target = target,
-        .optimize = optimize,
     });
+    exe.linkLibrary(sdl_dep.artifact("SDL2"));
+}
 
-    if (target.result.os.tag == .linux) {
-        // The SDL package doesn't work for Linux yet, so we rely on system
-        // packages for now.
-        exe.linkSystemLibrary("SDL2");
-        exe.linkLibC();
-    } else {
-        const sdl_dep = b.dependency("SDL", .{
-            .optimize = .ReleaseFast,
-            .target = target,
-        });
-        exe.linkLibrary(sdl_dep.artifact("SDL2"));
-    }
-
-    b.installArtifact(exe);
+b.installArtifact(exe);
 ```
