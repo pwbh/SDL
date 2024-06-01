@@ -38,3 +38,37 @@ if (target.result.os.tag == .linux) {
 
 b.installArtifact(exe);
 ```
+
+## Test it out
+
+Now lets test it out and see if it creates a window. It should create a window and exit after 5 seconds.
+
+```zig
+const c = @cImport({
+    @cInclude("SDL2/SDL.h");
+});
+const assert = @import("std").debug.assert;
+
+pub fn main() !void {
+    if (c.SDL_Init(c.SDL_INIT_VIDEO) != 0) {
+        c.SDL_Log("Unable to initialize SDL: %s", c.SDL_GetError());
+        return error.SDLInitializationFailed;
+    }
+    defer c.SDL_Quit();
+
+    const screen = c.SDL_CreateWindow("My Game Window", c.SDL_WINDOWPOS_UNDEFINED, c.SDL_WINDOWPOS_UNDEFINED, 400, 140, c.SDL_WINDOW_OPENGL) orelse
+        {
+        c.SDL_Log("Unable to create window: %s", c.SDL_GetError());
+        return error.SDLInitializationFailed;
+    };
+    defer c.SDL_DestroyWindow(screen);
+
+    const renderer = c.SDL_CreateRenderer(screen, -1, 0) orelse {
+        c.SDL_Log("Unable to create renderer: %s", c.SDL_GetError());
+        return error.SDLInitializationFailed;
+    };
+    defer c.SDL_DestroyRenderer(renderer);
+
+    c.SDL_Delay(5000);
+}
+```
