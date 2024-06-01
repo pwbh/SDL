@@ -35,4 +35,6 @@ In your `build.zig`:
         });
         exe.linkLibrary(sdl_dep.artifact("SDL2"));
     }
+
+    b.installArtifact(exe);
 ```
