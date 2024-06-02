@@ -162,7 +162,6 @@ const generic_src_files = [_][]const u8{
     "src/video/SDL_vulkan_utils.c",
     "src/video/SDL_yuv.c",
     "src/video/yuv2rgb/yuv_rgb_std.c",
-    "src/video/yuv2rgb/yuv_rgb_sse.c",
     "src/video/dummy/SDL_nullevents.c",
     "src/video/dummy/SDL_nullframebuffer.c",
     "src/video/dummy/SDL_nullvideo.c",
@@ -209,7 +208,7 @@ const windows_src_files = [_][]const u8{
     // This can be enabled when Zig updates to the next mingw-w64 release,
     // which will make the headers gain `windows.gaming.input.h`.
     // Also revert the patch 2c79fd8fd04f1e5045cbe5978943b0aea7593110.
-    "src/joystick/windows/SDL_windows_gaming_input.c",
+    //"src/joystick/windows/SDL_windows_gaming_input.c",
     "src/joystick/windows/SDL_windowsjoystick.c",
     "src/joystick/windows/SDL_xinputjoystick.c",
 
