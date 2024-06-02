@@ -37,7 +37,7 @@ jobs:
           cd sdl-window-test
           echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
           zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
-      - name: Build & Run
+      - name: Build
         run: |
           cd sdl-window-test
           zig build
