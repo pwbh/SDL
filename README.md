@@ -43,7 +43,7 @@ b.installArtifact(exe);
 
 Now lets test it out and see if it creates a window.
 
-Following codesnippet should create a window and exit after 5 seconds.
+Following codesnippet should create a window and exit after 2.5 seconds.
 
 ```zig
 const c = @cImport({
@@ -71,6 +71,7 @@ pub fn main() !void {
     defer c.SDL_DestroyRenderer(renderer);
 
     var quit = false;
+
     while (!quit) {
         var event: c.SDL_Event = undefined;
         while (c.SDL_PollEvent(&event) != 0) {
