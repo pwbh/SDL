@@ -18,7 +18,8 @@ jobs:
           wget https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
           tar xf zig-linux-x86_64-0.12.0.tar.xz
           source ~/.bashrc
-          echo 'export PATH="$HOME/zig-linux-x86_64-0.12.0:$PATH"' >> ~/.bashrc
+          ls -ltr
+          echo 'export PATH=$PATH:~/zig-linux-x86_64-0.12.0/zig' >> ~/.bashrc
       - name: check zig version
         run: |
           INSTALLED_ZIG_VERSION=$(zig version)
