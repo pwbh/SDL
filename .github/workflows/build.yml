@@ -26,7 +26,7 @@ jobs:
         run: |
           [ "$(zig version)" != "0.12.0" ] && exit 1 || exit 0
       - name: Clone example project
-        run: git clone git@github.com:pwbh/sdl-window-test.git
+        run: git clone https://github.com/pwbh/sdl-window-test.git
       - name: Fetch modified SDL
         run: |
           cd sdl-window-test
