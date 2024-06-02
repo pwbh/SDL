@@ -17,14 +17,12 @@ jobs:
     name: Linux
     runs-on: ubuntu-latest
     steps:
-      - name: Install Zig 0.12
+      - name: Install zig 0.12
         run: |
           wget https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
           tar xf zig-linux-x86_64-0.12.0.tar.xz
           echo "$GITHUB_WORKSPACE/zig-linux-x86_64-0.12.0/zig" >> $GITHUB_PATH
-      - name: check zig version
+      - name: Check zig version
         run: |
-          echo $PATH
-          ls -ltra
           INSTALLED_ZIG_VERSION=$(zig version)
           [  "$INSTALLED_ZIG_VERSION" != "0.12" ] && exit 1
