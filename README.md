@@ -71,6 +71,7 @@ pub fn main() !void {
     defer c.SDL_DestroyRenderer(renderer);
 
     var quit = false;
+
     while (!quit) {
         var event: c.SDL_Event = undefined;
         while (c.SDL_PollEvent(&event) != 0) {
