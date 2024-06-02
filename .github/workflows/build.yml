@@ -24,5 +24,7 @@ jobs:
           echo "$HOME/zig-linux-x86_64-0.12.0/zig" >> $GITHUB_PATH
       - name: check zig version
         run: |
+          cd $HOME/zig-linux-x86_64-0.12.0/
+          ls -ltra
           INSTALLED_ZIG_VERSION=$(zig version)
           [  "$INSTALLED_ZIG_VERSION" != "0.12" ] && exit 1
