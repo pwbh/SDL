@@ -27,7 +27,9 @@ jobs:
           [ "$(zig version)" != "0.12.0" ] && exit 1 || exit 0
 
       - name: Install SDL2 via package manager
-        run: sudo apt install libsdl2-2.0-0
+        run: |
+          sudo apt update
+          sudo apt install libsdl2-dev
       - name: Clone example project
         run: git clone https://github.com/pwbh/sdl-window-test.git
       - name: Fetch modified SDL
