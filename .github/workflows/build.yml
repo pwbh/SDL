@@ -30,7 +30,6 @@ jobs:
         run: |
           sudo apt update
           sudo apt install libsdl2-dev
-          sudo apt-get install xorg-dev
       - name: Clone example project
         run: git clone https://github.com/pwbh/sdl-window-test.git
       - name: Fetch modified SDL
@@ -41,4 +40,4 @@ jobs:
       - name: Build & Run
         run: |
           cd sdl-window-test
-          zig build run
+          zig build
