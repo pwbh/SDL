@@ -25,3 +25,12 @@ jobs:
       - name: Check zig version
         run: |
           [ "$(zig version)" != "0.12.0" ] && exit 1 || exit 0
+      - name: Clone example project
+        run: git clone git@github.com:pwbh/sdl-window-test.git
+      - name: Fetch example build & run
+        run: |
+          cd sdl-window-test
+          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.ref_name }}.zip
+          zig build run
+
+# https://github.com/pwbh/SDL/archive/refs/heads/${{ github.ref_name }}.zip
