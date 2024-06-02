@@ -25,4 +25,5 @@ jobs:
       - name: Check zig version
         run: |
           INSTALLED_ZIG_VERSION=$(zig version)
+          echo $INSTALLED_ZIG_VERSION
           [  "$INSTALLED_ZIG_VERSION" != "0.12" ] && exit 1
