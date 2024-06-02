@@ -21,12 +21,9 @@ jobs:
         run: |
           wget https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
           tar xf zig-linux-x86_64-0.12.0.tar.xz
-          echo 'export PATH=$PATH:~/zig-linux-x86_64-0.12.0/zig' >> .conf
+          echo 'export PATH="$HOME/zig-linux-x86_64-0.12.0:$PATH"' >> ~/.bashrc
           source .conf
-          ls -ltra
       - name: check zig version
         run: |
-          cat .conf
-          source .conf
           INSTALLED_ZIG_VERSION=$(zig version)
           [  "$INSTALLED_ZIG_VERSION" != "0.12" ] && exit 1
