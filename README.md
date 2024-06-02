@@ -70,6 +70,24 @@ pub fn main() !void {
     };
     defer c.SDL_DestroyRenderer(renderer);
 
-    c.SDL_Delay(5000);
+    var quit = false;
+
+    while (!quit) {
+        var event: c.SDL_Event = undefined;
+        while (c.SDL_PollEvent(&event) != 0) {
+            switch (event.type) {
+                c.SDL_QUIT => {
+                    quit = true;
+                },
+                else => {},
+            }
+        }
+
+        _ = c.SDL_RenderClear(renderer);
+        c.SDL_RenderPresent(renderer);
+
+        c.SDL_Delay(2500);
+        quit = true;
+    }
 }
 ```
