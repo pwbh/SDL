@@ -21,6 +21,8 @@ jobs:
         run: |
           wget https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
           tar xf zig-linux-x86_64-0.12.0.tar.xz
+          cd ..
+          ls -ltra
           echo "$HOME/zig-linux-x86_64-0.12.0" >> $GITHUB_PATH
       - name: check zig version
         run: |
