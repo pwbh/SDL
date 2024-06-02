@@ -30,7 +30,7 @@ jobs:
       - name: Fetch modified SDL
         run: |
           cd sdl-window-test
-          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.ref_name }}.zip
-          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.ref_name }}.zip
+          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.zip
+          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.zip
       - name: Build & Run
         run: zig build run
