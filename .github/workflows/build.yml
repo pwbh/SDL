@@ -23,7 +23,7 @@ jobs:
           tar xf zig-linux-x86_64-0.12.0.tar.xz
           cd ~
           ls -ltra
-          echo "~/zig-linux-x86_64-0.12.0/zig" >> $GITHUB_PATH
+          echo "$(pwd)/zig-linux-x86_64-0.12.0/zig" >> $GITHUB_PATH
       - name: check zig version
         run: |
           echo $PATH
