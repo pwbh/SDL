@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    shell: bash -e {0}
+
 jobs:
   build-linux:
     name: Linux
