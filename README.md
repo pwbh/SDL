@@ -86,8 +86,7 @@ pub fn main() !void {
         _ = c.SDL_RenderClear(renderer);
         c.SDL_RenderPresent(renderer);
 
-        c.SDL_Delay(2500);
-        quit = true;
+        c.SDL_Delay(10);
     }
 }
 ```
