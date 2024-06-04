@@ -1,4 +1,4 @@
-name: Builds and runs simple window
+name: Builds simple window program
 
 on:
   pull_request:
@@ -64,3 +64,23 @@ jobs:
         run: |
           cd sdl-window-test
           zig build
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - name: Install zig 0.12
+        run: winget install -e --id zig.zig
+      - name: Check zig version
+        run: |
+          [ "$(zig version)" != "0.12.0" ] && exit 1 || exit 0
+      # - name: Clone example project
+      #   run: git clone https://github.com/pwbh/sdl-window-test.git
+      # - name: Fetch modified SDL
+      #   run: |
+      #     cd sdl-window-test
+      #     echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+      #     zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+      # - name: Build
+      #   run: |
+      #     cd sdl-window-test
+      #     zig build
