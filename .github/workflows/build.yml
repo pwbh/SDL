@@ -78,7 +78,7 @@ jobs:
           echo "$GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0" >> $GITHUB_PATH
       - name: Check Zig version
         run: |
-          $GITHUB_WORKSPACE\zig-windows-x86_64-0.12.0\zig.exe version
+          $GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0/zig version
           [ "$($GITHUB_WORKSPACE\zig-windows-x86_64-0.12.0\zig.exe)" != "0.12.0" ] && exit 1 || exit 0
       - name: Clone example project
         run: git clone https://github.com/pwbh/sdl-window-test.git
