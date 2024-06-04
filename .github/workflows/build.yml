@@ -79,7 +79,7 @@ jobs:
       - name: Check Zig version
         run: |
           %GITHUB_WORKSPACE%\zig-windows-x86_64-0.12.0\zig.exe version
-          if not "%GITHUB_WORKSPACE%\zig-windows-x86_64-0.12.0\zig.exe version"!="0.12.0" exit /b 1
+          if not "%GITHUB_WORKSPACE%\zig-windows-x86_64-0.12.0\zig.exe version"=="0.12.0" exit /b 1
         shell: cmd
       - name: Clone example project
         run: git clone https://github.com/pwbh/sdl-window-test.git
