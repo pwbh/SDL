@@ -70,22 +70,20 @@ jobs:
     steps:
       - name: Install zig 0.12
         run: |
-          cd
-          curl --output zig-windows-x86_64-0.12.0.zip --url https://ziglang.org/download/0.12.0/zig-windows-x86_64-0.12.0.zip
-          unzip zig-windows-x86_64-0.12.0.zip
-          echo $GITHUB_WORKSPACE
-          echo "$GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0/zig.exe" >> $GITHUB_PATH
+          curl -L -o zig-windows-x86_64-0.12.0.zip https://ziglang.org/download/0.12.0/zig-windows-x86_64-0.12.0.zip
+          tar -xf zig-windows-x86_64-0.12.0.zip
+          echo "$GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0" >> $GITHUB_PATH
       - name: Check zig version
         run: |
-          [ "$(zig version)" != "0.12.0" ] && exit 1 || exit 0
-      # - name: Clone example project
-      #   run: git clone https://github.com/pwbh/sdl-window-test.git
-      # - name: Fetch modified SDL
-      #   run: |
-      #     cd sdl-window-test
-      #     echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
-      #     zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
-      # - name: Build
-      #   run: |
-      #     cd sdl-window-test
-      #     zig build
+          if not "%zig version%"=="0.12.0" exit /b 1
+      - name: Clone example project
+        run: git clone https://github.com/pwbh/sdl-window-test.git
+      - name: Fetch modified SDL
+        run: |
+          cd sdl-window-test
+          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+      - name: Build
+        run: |
+          cd sdl-window-test
+          zig build
