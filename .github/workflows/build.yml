@@ -12,6 +12,9 @@ defaults:
   run:
     shell: bash -e {0}
 
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
 jobs:
   build-linux:
     name: Linux
@@ -38,8 +41,8 @@ jobs:
       - name: Fetch modified SDL
         run: |
           cd sdl-window-test
-          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
-          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+          echo https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
+          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
 
       - name: Build
         run: |
@@ -66,8 +69,8 @@ jobs:
       - name: Fetch modified SDL
         run: |
           cd sdl-window-test
-          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
-          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+          echo https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
+          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
 
       - name: Build
         run: |
@@ -95,8 +98,8 @@ jobs:
       - name: Fetch modified SDL
         run: |
           cd sdl-window-test
-          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
-          $GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0/zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+          echo https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
+          $GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0/zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
 
       - name: Build
         run: |
