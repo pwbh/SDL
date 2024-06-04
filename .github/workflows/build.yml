@@ -1,0 +1,104 @@
+name: Builds simple window program
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash -e {0}
+
+jobs:
+  build-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install zig 0.12
+        run: |
+          wget https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
+          tar xf zig-linux-x86_64-0.12.0.tar.xz
+          echo "$GITHUB_WORKSPACE/zig-linux-x86_64-0.12.0" >> $GITHUB_PATH
+
+      - name: Check zig version
+        run: |
+          [ "$(zig version)" != "0.12.0" ] && exit 1 || exit 0
+
+      - name: Install SDL2 via package manager
+        run: |
+          sudo apt update
+          sudo apt install libsdl2-dev
+
+      - name: Clone example project
+        run: git clone https://github.com/pwbh/sdl-window-test.git
+
+      - name: Fetch modified SDL
+        run: |
+          cd sdl-window-test
+          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+
+      - name: Build
+        run: |
+          cd sdl-window-test
+          zig build
+
+  build-macos:
+    name: MacOS
+    runs-on: macos-latest
+    steps:
+      - name: Install zig 0.12
+        run: |
+          wget https://ziglang.org/download/0.12.0/zig-macos-aarch64-0.12.0.tar.xz
+          tar xf zig-macos-aarch64-0.12.0.tar.xz
+          echo "$GITHUB_WORKSPACE/zig-macos-aarch64-0.12.0" >> $GITHUB_PATH
+
+      - name: Check zig version
+        run: |
+          [ "$(zig version)" != "0.12.0" ] && exit 1 || exit 0
+
+      - name: Clone example project
+        run: git clone https://github.com/pwbh/sdl-window-test.git
+
+      - name: Fetch modified SDL
+        run: |
+          cd sdl-window-test
+          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+          zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+
+      - name: Build
+        run: |
+          cd sdl-window-test
+          zig build
+
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - name: Install Zig 0.12
+        run: |
+          curl -L -o zig-windows-x86_64-0.12.0.zip https://ziglang.org/download/0.12.0/zig-windows-x86_64-0.12.0.zip
+          unzip -qq zig-windows-x86_64-0.12.0.zip -d $GITHUB_WORKSPACE
+          echo "$GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0" >> $GITHUB_PATH
+
+      - name: Check Zig version
+        run: |
+          echo $GITHUB_PATH
+          [ "$($GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0/zig version)" != "0.12.0" ] && exit 1 || exit 0
+
+      - name: Clone example project
+        run: git clone https://github.com/pwbh/sdl-window-test.git
+
+      - name: Fetch modified SDL
+        run: |
+          cd sdl-window-test
+          echo https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+          $GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0/zig fetch --save https://github.com/pwbh/SDL/archive/refs/heads/${{ github.head_ref }}.tar.gz
+
+      - name: Build
+        run: |
+          cd sdl-window-test
+          $GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0/zig build
