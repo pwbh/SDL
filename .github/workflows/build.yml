@@ -74,7 +74,7 @@ jobs:
           curl --output zig-windows-x86_64-0.12.0.zip --url https://ziglang.org/download/0.12.0/zig-windows-x86_64-0.12.0.zip
           unzip zig-windows-x86_64-0.12.0.zip
           echo $GITHUB_WORKSPACE
-          echo "$GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/zig-windows-x86_64-0.12.0/zig.exe" >> $GITHUB_PATH
       - name: Check zig version
         run: |
           [ "$(zig version)" != "0.12.0" ] && exit 1 || exit 0
