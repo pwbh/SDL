@@ -11,7 +11,7 @@ We can easily fetch this library using `zig fetch`, for example:
 zig fetch --save https://github.com/pwbh/SDL/archive/refs/tags/release-2.30.3.tar.gz
 ```
 
-If another SDL version needed, we can use a different tag instead of the `release-2.30.3` in the url we fetch.
+If another SDL version needed, please see available tags released.
 
 In your `build.zig`:
 
@@ -43,7 +43,7 @@ b.installArtifact(exe);
 
 Now lets test it out and see if it creates a window.
 
-Following codesnippet should create a window and exit after 2.5 seconds.
+Following codesnippet should create a window that can be exited.
 
 ```zig
 const c = @cImport({
