@@ -4,7 +4,8 @@
     .version = "2.26.3-6",
     .dependencies = .{
         .sdl = .{
-            .path = "vendor/sdl",
+            .url = "https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.7.tar.gz",
+            .hash = "12207c0234d2e0f380ed6a43f24ba8f67d7cf4b7ec8aa71838597b22f3631e5ffab0",
         },
     },
     .paths = .{

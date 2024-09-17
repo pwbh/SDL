@@ -20,7 +20,7 @@ jobs:
     name: Linux
     runs-on: ubuntu-latest
     steps:
-      - name: Install zig 0.12
+      - name: Install zig 0.13
         run: |
           wget https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz
           tar xf zig-linux-x86_64-0.13.0.tar.xz
@@ -38,7 +38,7 @@ jobs:
       - name: Clone example project
         run: git clone https://github.com/pwbh/sdl-window-test.git
 
-      - name: Fetch modified SDL
+      - name: Fetch modified pwbh/SDL package
         run: |
           cd sdl-window-test
           echo https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
@@ -53,7 +53,7 @@ jobs:
     name: MacOS
     runs-on: macos-latest
     steps:
-      - name: Install zig 0.12
+      - name: Install zig 0.13
         run: |
           wget https://ziglang.org/download/0.13.0/zig-macos-aarch64-0.13.0.tar.xz
           tar xf zig-macos-aarch64-0.13.0.tar.xz
@@ -66,7 +66,7 @@ jobs:
       - name: Clone example project
         run: git clone https://github.com/pwbh/sdl-window-test.git
 
-      - name: Fetch modified SDL
+      - name: Fetch modified pwbh/SDL package
         run: |
           cd sdl-window-test
           echo https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
@@ -95,7 +95,7 @@ jobs:
       - name: Clone example project
         run: git clone https://github.com/pwbh/sdl-window-test.git
 
-      - name: Fetch modified SDL
+      - name: Fetch modified pwbh/SDL package
         run: |
           cd sdl-window-test
           echo https://github.com/pwbh/SDL/archive/refs/heads/$BRANCH_NAME.tar.gz
