@@ -20,7 +20,7 @@ pub fn build(b: *std.Build) void {
         .root = src_root_path,
         .files = &generic_src_files,
     });
-    lib.defineCMacro("SDL_USE_BUILTIN_OPENGL_DEFINITIONS", "1");
+    lib.root_module.addCMacro("SDL_USE_BUILTIN_OPENGL_DEFINITIONS", "1");
     // SDL_JOYSTICK_MFI
     lib.linkLibC();
 
