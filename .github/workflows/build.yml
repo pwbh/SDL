@@ -46,8 +46,8 @@ jobs:
       - name: Install Zig 0.16.0
         run: |
           wget https://ziglang.org/download/0.16.0/zig-aarch64-macos-0.16.0.tar.xz
-          tar xf zig-macos-aarch64-0.16.0.tar.xz
-          echo "$GITHUB_WORKSPACE/zig-macos-aarch64-0.16.0" >> $GITHUB_PATH
+          tar xf zig-aarch64-macos-0.16.0.tar.xz
+          echo "$GITHUB_WORKSPACE/zig-aarch64-macos-0.16.0" >> $GITHUB_PATH
       - name: Check zig version
         run: |
           [ "$(zig version)" != "0.16.0" ] && exit 1 || exit 0
