@@ -7,116 +7,192 @@ pub fn build(b: *std.Build) void {
 
     const sdl_c = b.dependency("sdl", .{});
 
-    const lib = b.addStaticLibrary(.{
-        .name = "SDL2",
+    const sdl_module = b.createModule(.{
         .target = target,
         .optimize = optimize,
+        // SDL_JOYSTICK_MFI
+        .link_libc = true,
     });
 
     const src_root_path = sdl_c.path("src");
 
-    lib.addIncludePath(sdl_c.path("include"));
-    lib.addCSourceFiles(.{
+    sdl_module.addIncludePath(sdl_c.path("include"));
+    sdl_module.addIncludePath(sdl_c.path("include/build_config"));
+
+    sdl_module.addCSourceFiles(.{
         .root = src_root_path,
         .files = &generic_src_files,
     });
-    lib.root_module.addCMacro("SDL_USE_BUILTIN_OPENGL_DEFINITIONS", "1");
-    // SDL_JOYSTICK_MFI
-    lib.linkLibC();
+    sdl_module.addCMacro("SDL_USE_BUILTIN_OPENGL_DEFINITIONS", "1");
 
     switch (t.os.tag) {
         .windows => {
-            lib.addCSourceFiles(.{
+            sdl_module.addCSourceFiles(.{
                 .root = src_root_path,
                 .files = &windows_src_files,
             });
-            lib.linkSystemLibrary("setupapi");
-            lib.linkSystemLibrary("winmm");
-            lib.linkSystemLibrary("gdi32");
-            lib.linkSystemLibrary("imm32");
-            lib.linkSystemLibrary("version");
-            lib.linkSystemLibrary("oleaut32");
-            lib.linkSystemLibrary("ole32");
+            sdl_module.linkSystemLibrary("setupapi", .{});
+            sdl_module.linkSystemLibrary("winmm", .{});
+            sdl_module.linkSystemLibrary("gdi32", .{});
+            sdl_module.linkSystemLibrary("imm32", .{});
+            sdl_module.linkSystemLibrary("version", .{});
+            sdl_module.linkSystemLibrary("oleaut32", .{});
+            sdl_module.linkSystemLibrary("ole32", .{});
         },
         .macos => {
-            lib.addCSourceFiles(.{
+            sdl_module.addCSourceFiles(.{
                 .root = src_root_path,
                 .files = &darwin_src_files,
             });
-            lib.addCSourceFiles(.{
+            sdl_module.addCSourceFiles(.{
                 .root = src_root_path,
                 .files = &objective_c_src_files,
                 .flags = &.{"-fobjc-arc"},
             });
-            lib.linkFramework("GameController");
-            lib.linkFramework("CoreHaptics");
-            lib.linkFramework("OpenGL");
-            lib.linkFramework("Metal");
-            lib.linkFramework("CoreVideo");
-            lib.linkFramework("Cocoa");
-            lib.linkFramework("IOKit");
-            lib.linkFramework("ForceFeedback");
-            lib.linkFramework("Carbon");
-            lib.linkFramework("CoreAudio");
-            lib.linkFramework("AudioToolbox");
-            lib.linkFramework("AVFoundation");
-            lib.linkFramework("Foundation");
+            sdl_module.linkFramework("GameController", .{});
+            sdl_module.linkFramework("CoreHaptics", .{});
+            sdl_module.linkFramework("OpenGL", .{});
+            sdl_module.linkFramework("Metal", .{});
+            sdl_module.linkFramework("CoreVideo", .{});
+            sdl_module.linkFramework("Cocoa", .{});
+            sdl_module.linkFramework("IOKit", .{});
+            sdl_module.linkFramework("ForceFeedback", .{});
+            sdl_module.linkFramework("Carbon", .{});
+            sdl_module.linkFramework("CoreAudio", .{});
+            sdl_module.linkFramework("AudioToolbox", .{});
+            sdl_module.linkFramework("AVFoundation", .{});
+            sdl_module.linkFramework("Foundation", .{});
         },
         else => {
             const config_header = b.addConfigHeader(.{
-                .style = .{ .cmake = sdl_c.path("include/SDL_config.h.cmake") },
-                .include_path = "SDL2/SDL_config.h",
+                .style = .{ .cmake = sdl_c.path("include/build_config/SDL_build_config.h.cmake") },
+                .include_path = "SDL3/SDL_build_config.h",
             }, .{});
-            lib.addConfigHeader(config_header);
-            lib.installConfigHeader(config_header);
+            sdl_module.addConfigHeader(config_header);
         },
     }
 
-    lib.installHeadersDirectory(sdl_c.path("include"), "SDL2", .{});
+    sdl_module.addIncludePath(src_root_path);
+
+    const lib = b.addLibrary(.{
+        .linkage = .static,
+        .name = "SDL3",
+        .root_module = sdl_module,
+    });
+
     b.installArtifact(lib);
 }
 
 const generic_src_files = [_][]const u8{
     "SDL.c",
     "SDL_assert.c",
-    "SDL_dataqueue.c",
     "SDL_error.c",
     "SDL_guid.c",
+    "SDL_hashtable.c",
     "SDL_hints.c",
     "SDL_list.c",
     "SDL_log.c",
+    "SDL_properties.c",
     "SDL_utils.c",
     "atomic/SDL_atomic.c",
     "atomic/SDL_spinlock.c",
     "audio/SDL_audio.c",
     "audio/SDL_audiocvt.c",
     "audio/SDL_audiodev.c",
+    "audio/SDL_audioqueue.c",
+    "audio/SDL_audioresample.c",
     "audio/SDL_audiotypecvt.c",
     "audio/SDL_mixer.c",
     "audio/SDL_wave.c",
+    "audio/disk/SDL_diskaudio.c",
+    "audio/dummy/SDL_dummyaudio.c",
+    "camera/SDL_camera.c",
+    "camera/dummy/SDL_camera_dummy.c",
+    "core/SDL_core_unsupported.c",
+    "core/unix/SDL_appid.c",
+    "core/unix/SDL_fribidi.c",
+    "core/unix/SDL_libthai.c",
+    "core/unix/SDL_poll.c",
     "cpuinfo/SDL_cpuinfo.c",
+    "dialog/SDL_dialog.c",
+    "dialog/SDL_dialog_utils.c",
+    "dialog/dummy/SDL_dummydialog.c",
+    "dialog/unix/SDL_portaldialog.c",
+    "dialog/unix/SDL_unixdialog.c",
+    "dialog/unix/SDL_zenitydialog.c",
+    "dialog/unix/SDL_zenitymessagebox.c",
     "dynapi/SDL_dynapi.c",
+    "events/SDL_categories.c",
     "events/SDL_clipboardevents.c",
     "events/SDL_displayevents.c",
     "events/SDL_dropevents.c",
     "events/SDL_events.c",
-    "events/SDL_gesture.c",
+    "events/SDL_eventwatch.c",
     "events/SDL_keyboard.c",
+    "events/SDL_keymap.c",
+    "events/SDL_keysym_to_keycode.c",
     "events/SDL_keysym_to_scancode.c",
     "events/SDL_mouse.c",
+    "events/SDL_pen.c",
     "events/SDL_quit.c",
     "events/SDL_scancode_tables.c",
     "events/SDL_touch.c",
     "events/SDL_windowevents.c",
     "events/imKStoUCS.c",
-    "file/SDL_rwops.c",
+    "filesystem/SDL_filesystem.c",
+    "filesystem/dummy/SDL_sysfilesystem.c",
+    "filesystem/dummy/SDL_sysfsops.c",
+    "filesystem/posix/SDL_sysfsops.c",
+    "filesystem/unix/SDL_sysfilesystem.c",
+    "gpu/SDL_gpu.c",
+    "gpu/vulkan/SDL_gpu_vulkan.c",
+    // "gpu/xr/SDL_gpu_openxr.c",
+    // "gpu/xr/SDL_openxrdyn.c",
     "haptic/SDL_haptic.c",
+    "haptic/dummy/SDL_syshaptic.c",
+    // "haptic/hidapi/SDL_hidapihaptic.c",
+    // "haptic/hidapi/SDL_hidapihaptic_lg4ff.c",
     "hidapi/SDL_hidapi.c",
-    "joystick/SDL_gamecontroller.c",
+    // "hidapi/hidtest/test.c",
+    // "hidapi/libusb/hid.c",
+    // "hidapi/netbsd/hid.c",
+    "io/SDL_asyncio.c",
+    "io/SDL_iostream.c",
+    "io/generic/SDL_asyncio_generic.c",
+    "joystick/SDL_gamepad.c",
     "joystick/SDL_joystick.c",
-    "joystick/controller_type.c",
-    "joystick/virtual/SDL_virtualjoystick.c",
     "joystick/SDL_steam_virtual_gamepad.c",
+    "joystick/controller_type.c",
+    "joystick/dummy/SDL_sysjoystick.c",
+    "joystick/hidapi/SDL_hidapi_8bitdo.c",
+    "joystick/hidapi/SDL_hidapi_combined.c",
+    "joystick/hidapi/SDL_hidapi_flydigi.c",
+    "joystick/hidapi/SDL_hidapi_gamecube.c",
+    // "joystick/hidapi/SDL_hidapi_gamesir.c",
+    "joystick/hidapi/SDL_hidapi_gip.c",
+    "joystick/hidapi/SDL_hidapi_lg4ff.c",
+    "joystick/hidapi/SDL_hidapi_luna.c",
+    "joystick/hidapi/SDL_hidapi_ps3.c",
+    "joystick/hidapi/SDL_hidapi_ps4.c",
+    "joystick/hidapi/SDL_hidapi_ps5.c",
+    "joystick/hidapi/SDL_hidapi_rumble.c",
+    "joystick/hidapi/SDL_hidapi_shield.c",
+    "joystick/hidapi/SDL_hidapi_sinput.c",
+    "joystick/hidapi/SDL_hidapi_stadia.c",
+    "joystick/hidapi/SDL_hidapi_steam.c",
+    "joystick/hidapi/SDL_hidapi_steam_hori.c",
+    "joystick/hidapi/SDL_hidapi_steam_triton.c",
+    "joystick/hidapi/SDL_hidapi_steamdeck.c",
+    "joystick/hidapi/SDL_hidapi_switch.c",
+    "joystick/hidapi/SDL_hidapi_switch2.c",
+    "joystick/hidapi/SDL_hidapi_wii.c",
+    "joystick/hidapi/SDL_hidapi_xbox360.c",
+    "joystick/hidapi/SDL_hidapi_xbox360w.c",
+    "joystick/hidapi/SDL_hidapi_xboxone.c",
+    "joystick/hidapi/SDL_hidapi_zuiki.c",
+    "joystick/hidapi/SDL_hidapijoystick.c",
+    "joystick/hidapi/SDL_report_descriptor.c",
+    "joystick/virtual/SDL_virtualjoystick.c",
     "libm/e_atan2.c",
     "libm/e_exp.c",
     "libm/e_fmod.c",
@@ -134,28 +210,100 @@ const generic_src_files = [_][]const u8{
     "libm/s_cos.c",
     "libm/s_fabs.c",
     "libm/s_floor.c",
+    "libm/s_isinf.c",
+    "libm/s_isinff.c",
+    "libm/s_isnan.c",
+    "libm/s_isnanf.c",
+    "libm/s_modf.c",
     "libm/s_scalbn.c",
     "libm/s_sin.c",
     "libm/s_tan.c",
+    "loadso/dlopen/SDL_sysloadso.c",
+    "loadso/dummy/SDL_sysloadso.c",
     "locale/SDL_locale.c",
+    "locale/dummy/SDL_syslocale.c",
+    "locale/unix/SDL_syslocale.c",
+    "main/SDL_main_callbacks.c",
+    "main/SDL_runapp.c",
+    "main/generic/SDL_sysmain_callbacks.c",
+    "misc/SDL_libusb.c",
     "misc/SDL_url.c",
+    "misc/dummy/SDL_sysurl.c",
+    "misc/unix/SDL_sysurl.c",
     "power/SDL_power.c",
-    "render/SDL_d3dmath.c",
+    "process/SDL_process.c",
+    "process/dummy/SDL_dummyprocess.c",
+    "process/posix/SDL_posixprocess.c",
     "render/SDL_render.c",
+    "render/SDL_render_unsupported.c",
     "render/SDL_yuv_sw.c",
+    "render/gpu/SDL_pipeline_gpu.c",
+    "render/gpu/SDL_render_gpu.c",
+    "render/gpu/SDL_shaders_gpu.c",
+    "render/opengl/SDL_render_gl.c",
+    "render/opengl/SDL_shaders_gl.c",
+    // "render/opengles/SDL_render_gles.c",
+    "render/opengles2/SDL_render_gles2.c",
+    "render/opengles2/SDL_shaders_gles2.c",
+    "render/software/SDL_blendfillrect.c",
+    "render/software/SDL_blendline.c",
+    "render/software/SDL_blendpoint.c",
+    "render/software/SDL_drawline.c",
+    "render/software/SDL_drawpoint.c",
+    "render/software/SDL_render_sw.c",
+    "render/software/SDL_triangle.c",
+    "render/vulkan/SDL_render_vulkan.c",
+    "render/vulkan/SDL_shaders_vulkan.c",
     "sensor/SDL_sensor.c",
+    "sensor/dummy/SDL_dummysensor.c",
     "stdlib/SDL_crc16.c",
     "stdlib/SDL_crc32.c",
     "stdlib/SDL_getenv.c",
     "stdlib/SDL_iconv.c",
     "stdlib/SDL_malloc.c",
-    "stdlib/SDL_mslibc.c",
+    "stdlib/SDL_memcpy.c",
+    "stdlib/SDL_memmove.c",
+    "stdlib/SDL_memset.c",
+    "stdlib/SDL_murmur3.c",
     "stdlib/SDL_qsort.c",
+    "stdlib/SDL_random.c",
     "stdlib/SDL_stdlib.c",
     "stdlib/SDL_string.c",
     "stdlib/SDL_strtokr.c",
+    "storage/SDL_storage.c",
+    "storage/generic/SDL_genericstorage.c",
+    "storage/steam/SDL_steamstorage.c",
+    "test/SDL_test_assert.c",
+    "test/SDL_test_common.c",
+    "test/SDL_test_compare.c",
+    "test/SDL_test_crc32.c",
+    "test/SDL_test_font.c",
+    "test/SDL_test_fuzzer.c",
+    "test/SDL_test_harness.c",
+    "test/SDL_test_log.c",
+    "test/SDL_test_md5.c",
+    "test/SDL_test_memory.c",
     "thread/SDL_thread.c",
+    "thread/generic/SDL_syscond.c",
+    "thread/generic/SDL_sysmutex.c",
+    "thread/generic/SDL_sysrwlock.c",
+    "thread/generic/SDL_syssem.c",
+    "thread/generic/SDL_systhread.c",
+    "thread/generic/SDL_systls.c",
+    "thread/pthread/SDL_syscond.c",
+    "thread/pthread/SDL_sysmutex.c",
+    "thread/pthread/SDL_sysrwlock.c",
+    "thread/pthread/SDL_syssem.c",
+    "thread/pthread/SDL_systhread.c",
+    "thread/pthread/SDL_systls.c",
+    "time/SDL_time.c",
+    "time/unix/SDL_systime.c",
     "timer/SDL_timer.c",
+    "timer/unix/SDL_systimer.c",
+    "tray/SDL_tray_utils.c",
+    "tray/dummy/SDL_tray.c",
+    // "tray/unix/SDL_dbustray.c",
+    "tray/unix/SDL_tray.c",
     "video/SDL_RLEaccel.c",
     "video/SDL_blit.c",
     "video/SDL_blit_0.c",
@@ -171,43 +319,29 @@ const generic_src_files = [_][]const u8{
     "video/SDL_fillrect.c",
     "video/SDL_pixels.c",
     "video/SDL_rect.c",
-    "video/SDL_shape.c",
+    "video/SDL_rotate.c",
+    "video/SDL_stb.c",
     "video/SDL_stretch.c",
     "video/SDL_surface.c",
     "video/SDL_video.c",
+    "video/SDL_video_unsupported.c",
     "video/SDL_vulkan_utils.c",
     "video/SDL_yuv.c",
-    "video/yuv2rgb/yuv_rgb_std.c",
-    "video/yuv2rgb/yuv_rgb_sse.c",
+    // "video/arm/SDL_sve2_blit_A.c",
+    // "video/arm/SDL_sve2_blit_N.c",
     "video/dummy/SDL_nullevents.c",
     "video/dummy/SDL_nullframebuffer.c",
     "video/dummy/SDL_nullvideo.c",
-    "render/software/SDL_blendfillrect.c",
-    "render/software/SDL_blendline.c",
-    "render/software/SDL_blendpoint.c",
-    "render/software/SDL_drawline.c",
-    "render/software/SDL_drawpoint.c",
-    "render/software/SDL_render_sw.c",
-    "render/software/SDL_rotate.c",
-    "render/software/SDL_triangle.c",
-    "audio/dummy/SDL_dummyaudio.c",
-    "joystick/hidapi/SDL_hidapi_combined.c",
-    "joystick/hidapi/SDL_hidapi_gamecube.c",
-    "joystick/hidapi/SDL_hidapi_luna.c",
-    "joystick/hidapi/SDL_hidapi_ps3.c",
-    "joystick/hidapi/SDL_hidapi_ps4.c",
-    "joystick/hidapi/SDL_hidapi_ps5.c",
-    "joystick/hidapi/SDL_hidapi_rumble.c",
-    "joystick/hidapi/SDL_hidapi_shield.c",
-    "joystick/hidapi/SDL_hidapi_stadia.c",
-    "joystick/hidapi/SDL_hidapi_steam.c",
-    "joystick/hidapi/SDL_hidapi_steamdeck.c",
-    "joystick/hidapi/SDL_hidapi_switch.c",
-    "joystick/hidapi/SDL_hidapi_wii.c",
-    "joystick/hidapi/SDL_hidapi_xbox360.c",
-    "joystick/hidapi/SDL_hidapi_xbox360w.c",
-    "joystick/hidapi/SDL_hidapi_xboxone.c",
-    "joystick/hidapi/SDL_hidapijoystick.c",
+    "video/offscreen/SDL_offscreenevents.c",
+    "video/offscreen/SDL_offscreenframebuffer.c",
+    "video/offscreen/SDL_offscreenopengles.c",
+    "video/offscreen/SDL_offscreenvideo.c",
+    "video/offscreen/SDL_offscreenvulkan.c",
+    "video/offscreen/SDL_offscreenwindow.c",
+    "video/openvr/SDL_openvrvideo.c",
+    "video/yuv2rgb/yuv_rgb_lsx.c",
+    "video/yuv2rgb/yuv_rgb_sse.c",
+    "video/yuv2rgb/yuv_rgb_std.c",
 };
 
 const windows_src_files = [_][]const u8{
@@ -331,41 +465,24 @@ const linux_src_files = [_][]const u8{
 };
 
 const darwin_src_files = [_][]const u8{
+    "hidapi/mac/hid.c",
     "haptic/darwin/SDL_syshaptic.c",
     "joystick/darwin/SDL_iokitjoystick.c",
-    "power/macosx/SDL_syspower.c",
-    "timer/unix/SDL_systimer.c",
-    "loadso/dlopen/SDL_sysloadso.c",
-    "audio/disk/SDL_diskaudio.c",
-    "render/opengl/SDL_render_gl.c",
-    "render/opengl/SDL_shaders_gl.c",
-    "render/opengles/SDL_render_gles.c",
-    "render/opengles2/SDL_render_gles2.c",
-    "render/opengles2/SDL_shaders_gles2.c",
-    "sensor/dummy/SDL_dummysensor.c",
-
-    "hidapi/mac/hid.c",
-
-    "thread/pthread/SDL_syscond.c",
-    "thread/pthread/SDL_sysmutex.c",
-    "thread/pthread/SDL_syssem.c",
-    "thread/pthread/SDL_systhread.c",
-    "thread/pthread/SDL_systls.c",
+    "power/macos/SDL_syspower.c",
 };
 
 const objective_c_src_files = [_][]const u8{
     "audio/coreaudio/SDL_coreaudio.m",
-    "file/cocoa/SDL_rwopsbundlesupport.m",
+    "camera/coremedia/SDL_camera_coremedia.m",
+    "dialog/cocoa/SDL_cocoadialog.m",
     "filesystem/cocoa/SDL_sysfilesystem.m",
-    //"hidapi/testgui/mac_support_cocoa.m",
-    // This appears to be for SDL3 only.
-    // "joystick/apple/SDL_mfijoystick.m",
-    "joystick/iphoneos/SDL_mfijoystick.m",
-    "locale/macosx/SDL_syslocale.m",
-    "misc/macosx/SDL_sysurl.m",
-    "power/uikit/SDL_syspower.m",
+    "gpu/metal/SDL_gpu_metal.m",
+    "joystick/apple/SDL_mfijoystick.m",
+    "locale/macos/SDL_syslocale.m",
+    "misc/macos/SDL_sysurl.m",
     "render/metal/SDL_render_metal.m",
     "sensor/coremotion/SDL_coremotionsensor.m",
+    "tray/cocoa/SDL_tray.m",
     "video/cocoa/SDL_cocoaclipboard.m",
     "video/cocoa/SDL_cocoaevents.m",
     "video/cocoa/SDL_cocoakeyboard.m",
@@ -375,23 +492,11 @@ const objective_c_src_files = [_][]const u8{
     "video/cocoa/SDL_cocoamouse.m",
     "video/cocoa/SDL_cocoaopengl.m",
     "video/cocoa/SDL_cocoaopengles.m",
+    "video/cocoa/SDL_cocoapen.m",
     "video/cocoa/SDL_cocoashape.m",
     "video/cocoa/SDL_cocoavideo.m",
     "video/cocoa/SDL_cocoavulkan.m",
     "video/cocoa/SDL_cocoawindow.m",
-    "video/uikit/SDL_uikitappdelegate.m",
-    "video/uikit/SDL_uikitclipboard.m",
-    "video/uikit/SDL_uikitevents.m",
-    "video/uikit/SDL_uikitmessagebox.m",
-    "video/uikit/SDL_uikitmetalview.m",
-    "video/uikit/SDL_uikitmodes.m",
-    "video/uikit/SDL_uikitopengles.m",
-    "video/uikit/SDL_uikitopenglview.m",
-    "video/uikit/SDL_uikitvideo.m",
-    "video/uikit/SDL_uikitview.m",
-    "video/uikit/SDL_uikitviewcontroller.m",
-    "video/uikit/SDL_uikitvulkan.m",
-    "video/uikit/SDL_uikitwindow.m",
 };
 
 const ios_src_files = [_][]const u8{

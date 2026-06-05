@@ -16,14 +16,14 @@ jobs:
     name: Linux
     runs-on: ubuntu-latest
     steps:
-      - name: Install zig 0.14
+      - name: Install Zig 0.16.0
         run: |
-          wget https://ziglang.org/download/0.14.0/zig-linux-x86_64-0.14.0.tar.xz
-          tar xf zig-linux-x86_64-0.14.0.tar.xz
-          echo "$GITHUB_WORKSPACE/zig-linux-x86_64-0.14.0" >> $GITHUB_PATH
+          wget https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz
+          tar xf zig-linux-x86_64-0.16.0.tar.xz
+          echo "$GITHUB_WORKSPACE/zig-linux-x86_64-0.16.0" >> $GITHUB_PATH
       - name: Check zig version
         run: |
-          [ "$(zig version)" != "0.14.0" ] && exit 1 || exit 0
+          [ "$(zig version)" != "0.16.0" ] && exit 1 || exit 0
       - name: Install SDL2 via package manager
         run: |
           sudo apt update
@@ -43,14 +43,14 @@ jobs:
     name: MacOS
     runs-on: macos-latest
     steps:
-      - name: Install zig 0.14
+      - name: Install Zig 0.16.0
         run: |
-          wget https://ziglang.org/download/0.14.0/zig-macos-aarch64-0.14.0.tar.xz
-          tar xf zig-macos-aarch64-0.14.0.tar.xz
-          echo "$GITHUB_WORKSPACE/zig-macos-aarch64-0.14.0" >> $GITHUB_PATH
+          wget https://ziglang.org/download/0.16.0/zig-aarch64-macos-0.16.0.tar.xz
+          tar xf zig-aarch64-macos-0.16.0.tar.xz
+          echo "$GITHUB_WORKSPACE/zig-aarch64-macos-0.16.0" >> $GITHUB_PATH
       - name: Check zig version
         run: |
-          [ "$(zig version)" != "0.14.0" ] && exit 1 || exit 0
+          [ "$(zig version)" != "0.16.0" ] && exit 1 || exit 0
       - name: Clone example project
         run: git clone https://github.com/pwbh/sdl-window-test.git
       - name: Fetch modified pwbh/SDL package
@@ -66,10 +66,10 @@ jobs:
     name: Windows
     runs-on: windows-latest
     steps:
-      - name: Install Zig 0.14
+      - name: Install Zig 0.16.0
         run: |
-          curl -L -o zig-windows-x86_64-0.14.0.zip https://ziglang.org/download/0.14.0/zig-windows-x86_64-0.14.0.zip
-          unzip -qq zig-windows-x86_64-0.14.0.zip -d $GITHUB_WORKSPACE
+          curl -L -o zig-windows-x86_64-0.16.0.zip https://ziglang.org/download/0.16.0/zig-x86_64-windows-0.16.0.zip
+          unzip -qq zig-windows-x86_64-0.16.0.zip -d $GITHUB_WORKSPACE
           echo "$GITHUB_WORKSPACE/zig-windows-x86_64-0.14.0" >> $GITHUB_PATH
       - name: Check Zig version
         run: |
